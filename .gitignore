@@ -31,7 +31,6 @@ hs_err_pid*
 
 out/
 
-*.class
 *.log
 
 # sbt specific
@@ -39,7 +38,6 @@ out/
 .history
 .lib/
 dist/*
-target/
 lib_managed/
 src_managed/
 project/boot/
@@ -52,5 +50,3 @@ project/plugins/project/
 .worksheet
 
 # ENSIME specific
-.ensime_cache/
-.ensime
