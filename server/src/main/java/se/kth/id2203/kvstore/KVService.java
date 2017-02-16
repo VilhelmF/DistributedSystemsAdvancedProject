@@ -54,6 +54,12 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(Operation content, Message context) {
+
+            if(keyValueStore.isEmpty()) {
+                keyValueStore.put(1, "Hestur");
+                keyValueStore.put(2, "Mús");
+            }
+
             LOG.info("Got operation {}!", content);
 
             if (content.operation.equals("get")) {

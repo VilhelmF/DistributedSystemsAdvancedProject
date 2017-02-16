@@ -74,7 +74,7 @@ public class Console implements Runnable {
                     out.println("Operation sent! Awaiting response...");
                     try {
                         OpResponse r = fr.get();
-                        out.println("Operation complete! Response was: " + r.status + " Value: " + r.value);
+                        out.println("Operation complete! Response was: " + r.status + " Value: " + r.response);
                         return true;
                     } catch (InterruptedException | ExecutionException ex) {
                         ex.printStackTrace(out);
