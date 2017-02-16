@@ -25,6 +25,7 @@ package se.kth.id2203.kvstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.Routing;
@@ -42,35 +43,32 @@ import java.util.HashMap;
 public class KVService extends ComponentDefinition {
 
     final static Logger LOG = LoggerFactory.getLogger(KVService.class);
-    private HashMap<Integer, String> hashMap = new HashMap<>();
     //******* Ports ******
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Routing> route = requires(Routing.class);
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
+    private final HashMap<Integer, String> keyValueStore = new HashMap<>();
     //******* Handlers ******
     protected final ClassMatchedHandler<Operation, Message> opHandler = new ClassMatchedHandler<Operation, Message>() {
 
         @Override
         public void handle(Operation content, Message context) {
-            LOG.info("Got operation {}! Now implement me please :)", content);
-            LOG.info("Working on it!", content);
+            LOG.info("Got operation {}!", content);
 
-            if(hashMap.isEmpty()) {
-                hashMap.put(1, "Hestur");
-                hashMap.put(2, "Mús");
+            if (content.operation.equals("get")) {
+                String value = keyValueStore.get(Integer.parseInt(content.key));
+                if (value == null) {
+                    trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
+                }
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
+            } else if (content.operation.equals("put")) {
+                //TODO
+                keyValueStore.put(Integer.parseInt(content.key), content.value);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_IMPLEMENTED)), net);
             }
-            switch(content.operation.toLowerCase()) {
-                case "get" :
-                    int i_key = Integer.parseInt(content.key);
-                    if(hashMap.containsKey(i_key)) {
-                        String requestValue = hashMap.get(i_key);
-                        trigger(new Message(self, context.getSource(), new OpResponse(content.id, OpResponse.Code.OK, requestValue)), net);
-                    } else {
-                        trigger(new Message(self, context.getSource(), new OpResponse(content.id, OpResponse.Code.NOT_FOUND, null)), net);
-                    }
-            }
-            //trigger(new Message(self, context.getSource(), new OpResponse(content.id, Code.NOT_IMPLEMENTED)), net);
+
+            trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_IMPLEMENTED)), net);
         }
 
     };

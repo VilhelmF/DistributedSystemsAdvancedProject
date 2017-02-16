@@ -38,25 +38,25 @@ public class OpResponse implements KompicsEvent, Serializable {
     private static final long serialVersionUID = -1668600257615491286L;
 
     public final UUID id;
+    public final String response;
     public final Code status;
-    public final String value;
 
-    public OpResponse(UUID id, Code status, String value) {
+    public OpResponse(UUID id, String response, Code status) {
         this.id = id;
+        this.response = response;
         this.status = status;
-        this.value = value;
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("id", id)
+                .add("response", response)
                 .add("status", status)
                 .toString();
     }
 
     public static enum Code {
-
         OK, NOT_FOUND, NOT_IMPLEMENTED;
     }
 }
