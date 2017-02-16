@@ -56,6 +56,7 @@ public class ClientService extends ComponentDefinition {
     //******* Ports ******
     final Positive<Timer> timer = requires(Timer.class);
     final Positive<Network> net = requires(Network.class);
+
     //******* Fields ******
     private final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private final NetAddress server = config().getValue("id2203.project.bootstrap-address", NetAddress.class);

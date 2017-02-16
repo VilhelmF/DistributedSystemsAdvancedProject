@@ -50,6 +50,7 @@ public class BootstrapServer extends ComponentDefinition {
     protected final Negative<Bootstrapping> boot = provides(Bootstrapping.class);
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
+
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     final int bootThreshold = config().getValue("id2203.project.bootThreshold", Integer.class);
@@ -58,6 +59,7 @@ public class BootstrapServer extends ComponentDefinition {
     private final Set<NetAddress> active = new HashSet<>();
     private final Set<NetAddress> ready = new HashSet<>();
     private NodeAssignment initialAssignment = null;
+
     //******* Handlers ******
     protected final Handler<Start> startHandler = new Handler<Start>() {
         @Override
