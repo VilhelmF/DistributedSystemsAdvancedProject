@@ -25,7 +25,6 @@ package se.kth.id2203.kvstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.Routing;
@@ -34,6 +33,8 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 
+import java.util.HashMap;
+
 /**
  *
  * @author Lars Kroll <lkroll@kth.se>
@@ -41,6 +42,7 @@ import se.sics.kompics.network.Network;
 public class KVService extends ComponentDefinition {
 
     final static Logger LOG = LoggerFactory.getLogger(KVService.class);
+    private HashMap<Integer, String> hashMap = new HashMap<>();
     //******* Ports ******
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Routing> route = requires(Routing.class);
@@ -52,8 +54,23 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(Operation content, Message context) {
             LOG.info("Got operation {}! Now implement me please :)", content);
+            LOG.info("Working on it!", content);
 
-            trigger(new Message(self, context.getSource(), new OpResponse(content.id, Code.NOT_IMPLEMENTED)), net);
+            if(hashMap.isEmpty()) {
+                hashMap.put(1, "Hestur");
+                hashMap.put(2, "Mús");
+            }
+            switch(content.operation.toLowerCase()) {
+                case "get" :
+                    int i_key = Integer.parseInt(content.key);
+                    if(hashMap.containsKey(i_key)) {
+                        String requestValue = hashMap.get(i_key);
+                        trigger(new Message(self, context.getSource(), new OpResponse(content.id, OpResponse.Code.OK, requestValue)), net);
+                    } else {
+                        trigger(new Message(self, context.getSource(), new OpResponse(content.id, OpResponse.Code.NOT_FOUND, null)), net);
+                    }
+            }
+            //trigger(new Message(self, context.getSource(), new OpResponse(content.id, Code.NOT_IMPLEMENTED)), net);
         }
 
     };

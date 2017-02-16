@@ -24,9 +24,10 @@
 package se.kth.id2203.kvstore;
 
 import com.google.common.base.MoreObjects;
+import se.sics.kompics.KompicsEvent;
+
 import java.io.Serializable;
 import java.util.UUID;
-import se.sics.kompics.KompicsEvent;
 
 /**
  *
@@ -38,10 +39,12 @@ public class OpResponse implements KompicsEvent, Serializable {
 
     public final UUID id;
     public final Code status;
+    public final String value;
 
-    public OpResponse(UUID id, Code status) {
+    public OpResponse(UUID id, Code status, String value) {
         this.id = id;
         this.status = status;
+        this.value = value;
     }
 
     @Override

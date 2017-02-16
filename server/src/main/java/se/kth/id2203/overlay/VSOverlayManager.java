@@ -24,7 +24,6 @@
 package se.kth.id2203.overlay;
 
 import com.larskroll.common.J6;
-import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.bootstrapping.Booted;
@@ -33,13 +32,11 @@ import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
-import se.sics.kompics.ClassMatchedHandler;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
+
+import java.util.Collection;
 
 /**
  * The V(ery)S(imple)OverlayManager.
@@ -70,7 +67,13 @@ public class VSOverlayManager extends ComponentDefinition {
         @Override
         public void handle(GetInitialAssignments event) {
             LOG.info("Generating LookupTable...");
-            LookupTable lut = LookupTable.generate(event.nodes);
+            //LookupTable lut = LookupTable.generate(event.nodes);
+            LookupTable lut = LookupTable.createEmpty();
+            int i = 0;
+            for (NetAddress node : event.nodes) {
+               lut.addNode(node, i);
+               i++;
+            }
             LOG.debug("Generated assignments:\n{}", lut);
             trigger(new InitialAssignments(lut), boot);
         }
@@ -91,7 +94,8 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(RouteMsg content, Message context) {
-            Collection<NetAddress> partition = lut.lookup(content.key);
+            int i_key = Integer.parseInt(content.key);
+            Collection<NetAddress> partition = lut.get(i_key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Forwarding message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);

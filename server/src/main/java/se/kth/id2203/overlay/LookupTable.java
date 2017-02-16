@@ -26,9 +26,10 @@ package se.kth.id2203.overlay;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.TreeMultimap;
-import java.util.Collection;
 import se.kth.id2203.bootstrapping.NodeAssignment;
 import se.kth.id2203.networking.NetAddress;
+
+import java.util.Collection;
 
 /**
  *
@@ -46,6 +47,12 @@ public class LookupTable implements NodeAssignment {
         if (partition == null) {
             partition = partitions.keySet().last();
         }
+        return partitions.get(partition);
+    }
+
+    public Collection<NetAddress> get(int key) {
+        int partition = partitions.keySet().last();
+        if (this.partitions.containsKey(key)) partition = key;
         return partitions.get(partition);
     }
 
@@ -71,6 +78,15 @@ public class LookupTable implements NodeAssignment {
         LookupTable lut = new LookupTable();
         lut.partitions.putAll(0, nodes);
         return lut;
+    }
+
+    static LookupTable createEmpty() {
+        LookupTable lut = new LookupTable();
+        return lut;
+    }
+
+    void addNode(NetAddress node, int key) {
+        this.partitions.get(key).add(node);
     }
 
 }
