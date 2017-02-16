@@ -52,6 +52,7 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(Operation content, Message context) {
             LOG.info("Got operation {}! Now implement me please :)", content);
+
             trigger(new Message(self, context.getSource(), new OpResponse(content.id, Code.NOT_IMPLEMENTED)), net);
         }
 

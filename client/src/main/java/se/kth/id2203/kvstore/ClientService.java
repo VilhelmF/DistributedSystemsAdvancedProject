@@ -56,6 +56,7 @@ public class ClientService extends ComponentDefinition {
     //******* Ports ******
     final Positive<Timer> timer = requires(Timer.class);
     final Positive<Network> net = requires(Network.class);
+
     //******* Fields ******
     private final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private final NetAddress server = config().getValue("id2203.project.bootstrap-address", NetAddress.class);
@@ -133,8 +134,8 @@ public class ClientService extends ComponentDefinition {
         subscribe(responseHandler, net);
     }
     
-    Future<OpResponse> op(String key) {
-        Operation op = new Operation(key);
+    Future<OpResponse> op(String operation, String key, String value) {
+        Operation op = new Operation(operation, key, value);
         OpWithFuture owf = new OpWithFuture(op);
         trigger(owf, onSelf);
         return owf.f;
