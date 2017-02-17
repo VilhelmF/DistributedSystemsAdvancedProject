@@ -121,7 +121,7 @@ public class VSOverlayManager extends ComponentDefinition {
             LOG.info("Routing message for key {} to {}", event.key, target);
             Map<Address, Object> map = new Map<>();
             for (NetAddress netAddress : partition) {
-                map = map.$plus(Tuple2.apply((Address) netAddress, (Object )0));
+                map = map.$plus(Tuple2.apply((Address) netAddress, (Object)0));
             }
             VectorClock vectorClock = new VectorClock(map);
             //TODO WaitingCRB or EagerReliableBroadcast
