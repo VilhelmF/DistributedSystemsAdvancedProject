@@ -26,10 +26,14 @@ package se.kth.id2203.overlay;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.TreeMultimap;
+import com.google.common.hash.Hasher;
+import se.kth.id2203.Util.MurmurHasher;
 import se.kth.id2203.bootstrapping.NodeAssignment;
 import se.kth.id2203.networking.NetAddress;
 
 import java.util.Collection;
+
+import static com.google.common.hash.Hashing.murmur3_32;
 
 /**
  *
@@ -50,9 +54,12 @@ public class LookupTable implements NodeAssignment {
         return partitions.get(partition);
     }
 
-    public Collection<NetAddress> get(int key) {
+    public Collection<NetAddress> get(String key) {
+
+        int hashedKey = MurmurHasher.keyToHash(key);
+
         int partition = partitions.keySet().last();
-        if (this.partitions.containsKey(key)) partition = key;
+        if (this.partitions.containsKey(hashedKey)) partition = hashedKey;
         return partitions.get(partition);
     }
 
