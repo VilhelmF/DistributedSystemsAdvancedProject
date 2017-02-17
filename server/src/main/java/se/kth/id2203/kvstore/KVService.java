@@ -65,7 +65,7 @@ public class KVService extends ComponentDefinition {
             } else if (content.operation.equals("put")) {
                 //TODO
                 keyValueStore.put(Integer.parseInt(content.key), content.value);
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_IMPLEMENTED)), net);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
             }
 
             trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_IMPLEMENTED)), net);
