@@ -23,6 +23,9 @@
  */
 package se.kth.id2203.simulation;
 
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.kvstore.OpResponse;
@@ -30,13 +33,13 @@ import se.kth.id2203.kvstore.Operation;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.RouteMsg;
-import se.sics.kompics.*;
+import se.sics.kompics.ClassMatchedHandler;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Positive;
+import se.sics.kompics.Start;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
 
 /**
  *
@@ -60,7 +63,7 @@ public class ScenarioClient extends ComponentDefinition {
         public void handle(Start event) {
             int messages = res.get("messages", Integer.class);
             for (int i = 0; i < messages; i++) {
-                Operation op = new Operation("test" + i, null, null);
+                Operation op = new Operation("test" + i, "1", "testValue");
                 RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
                 trigger(new Message(self, server, rm), net);
                 pending.put(op.id, op.key);
