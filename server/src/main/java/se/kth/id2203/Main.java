@@ -44,6 +44,7 @@ import se.sics.kompics.config.ValueMerger;
  *
  * @author Lars Kroll <lkroll@kth.se>
  */
+@SuppressWarnings("Duplicates")
 public class Main {
 
     static final NetAddressConverter NAC = new NetAddressConverter();

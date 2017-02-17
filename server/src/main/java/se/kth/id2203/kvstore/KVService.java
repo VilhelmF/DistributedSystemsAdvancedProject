@@ -34,6 +34,8 @@ import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 
+import java.util.HashMap;
+
 /**
  *
  * @author Lars Kroll <lkroll@kth.se>
@@ -46,14 +48,33 @@ public class KVService extends ComponentDefinition {
     protected final Positive<Routing> route = requires(Routing.class);
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
+    private final HashMap<Integer, String> keyValueStore = new HashMap<>();
     //******* Handlers ******
     protected final ClassMatchedHandler<Operation, Message> opHandler = new ClassMatchedHandler<Operation, Message>() {
 
         @Override
         public void handle(Operation content, Message context) {
-            LOG.info("Got operation {}! Now implement me please :)", content);
 
-            trigger(new Message(self, context.getSource(), new OpResponse(content.id, Code.NOT_IMPLEMENTED)), net);
+            if(keyValueStore.isEmpty()) {
+                keyValueStore.put(1, "Hestur");
+                keyValueStore.put(2, "Mús");
+            }
+
+            LOG.info("Got operation {}!", content);
+
+            if (content.operation.equals("get")) {
+                String value = keyValueStore.get(Integer.parseInt(content.key));
+                if (value == null) {
+                    trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
+                }
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
+            } else if (content.operation.equals("put")) {
+                //TODO
+                keyValueStore.put(Integer.parseInt(content.key), content.value);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
+            }
+
+            trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_IMPLEMENTED)), net);
         }
 
     };

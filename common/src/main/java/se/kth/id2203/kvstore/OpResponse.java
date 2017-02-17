@@ -24,9 +24,10 @@
 package se.kth.id2203.kvstore;
 
 import com.google.common.base.MoreObjects;
+import se.sics.kompics.KompicsEvent;
+
 import java.io.Serializable;
 import java.util.UUID;
-import se.sics.kompics.KompicsEvent;
 
 /**
  *
@@ -37,10 +38,12 @@ public class OpResponse implements KompicsEvent, Serializable {
     private static final long serialVersionUID = -1668600257615491286L;
 
     public final UUID id;
+    public final String response;
     public final Code status;
 
-    public OpResponse(UUID id, Code status) {
+    public OpResponse(UUID id, String response, Code status) {
         this.id = id;
+        this.response = response;
         this.status = status;
     }
 
@@ -48,12 +51,12 @@ public class OpResponse implements KompicsEvent, Serializable {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("id", id)
+                .add("response", response)
                 .add("status", status)
                 .toString();
     }
 
     public static enum Code {
-
         OK, NOT_FOUND, NOT_IMPLEMENTED;
     }
 }
