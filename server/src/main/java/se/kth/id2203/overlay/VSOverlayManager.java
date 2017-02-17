@@ -26,17 +26,28 @@ package se.kth.id2203.overlay;
 import com.larskroll.common.J6;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
+import scala.collection.Seq;
 import se.kth.id2203.bootstrapping.Booted;
 import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
+import se.kth.id2203.core.EagerReliableBroadcast;
+import se.kth.id2203.core.ExercisePrimitives.*;
+import se.kth.id2203.core.WaitingCRB;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
-import se.sics.kompics.*;
+import se.sics.kompics.ClassMatchedHandler;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Negative;
+import se.sics.kompics.Positive;
+import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-
+import se.sics.kompics.sl.*;
+import scala.collection.immutable.Map;
 import java.util.Collection;
+
 
 /**
  * The V(ery)S(imple)OverlayManager.
@@ -108,6 +119,12 @@ public class VSOverlayManager extends ComponentDefinition {
             Collection<NetAddress> partition = lut.lookup(event.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Routing message for key {} to {}", event.key, target);
+            Map<Address, Object> map = new Map<>();
+            for (NetAddress netAddress : partition) {
+                map = map.$plus(Tuple2.apply((Address) netAddress, (Object )0));
+            }
+            VectorClock vectorClock = new VectorClock(map);
+            //TODO WaitingCRB or EagerReliableBroadcast
             trigger(new Message(self, target, event.msg), net);
         }
     };
