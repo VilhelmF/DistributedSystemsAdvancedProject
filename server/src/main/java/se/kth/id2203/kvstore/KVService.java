@@ -25,6 +25,7 @@ package se.kth.id2203.kvstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.Util.MurmurHasher;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -55,22 +56,24 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(Operation content, Message context) {
 
+
             if(keyValueStore.isEmpty()) {
-                keyValueStore.put(1, "Hestur");
-                keyValueStore.put(2, "Mús");
+                keyValueStore.put(MurmurHasher.keyToHash("asdf1"), "Hestur");
+                keyValueStore.put(MurmurHasher.keyToHash("asdf2"), "Mús");
             }
 
             LOG.info("Got operation {}!", content);
 
+            int hashedKey = MurmurHasher.keyToHash(content.key);
             if (content.operation.equals("get")) {
-                String value = keyValueStore.get(Integer.parseInt(content.key));
+                String value = keyValueStore.get(hashedKey);
                 if (value == null) {
                     trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
                 }
                 trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
             } else if (content.operation.equals("put")) {
                 //TODO
-                keyValueStore.put(Integer.parseInt(content.key), content.value);
+                keyValueStore.put(hashedKey, content.value);
                 trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
             }
 

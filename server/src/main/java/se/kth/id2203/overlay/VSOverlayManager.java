@@ -105,8 +105,8 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(RouteMsg content, Message context) {
-            int i_key = Integer.parseInt(content.key);
-            Collection<NetAddress> partition = lut.get(i_key);
+            //int i_key = Integer.parseInt(content.key);
+            Collection<NetAddress> partition = lut.get(content.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Forwarding message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);
