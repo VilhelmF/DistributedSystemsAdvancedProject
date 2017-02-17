@@ -9,7 +9,7 @@ import se.sics.kompics.network._
 import se.sics.kompics.sl.{Init, _}
 import se.sics.kompics.{ComponentDefinition => _, Port => _, KompicsEvent}
 
-case class OriginatedData(src: Address, payload: KompicsEvent) extends KompicsEvent;
+
 
 class EagerReliableBroadcast(init: Init[EagerReliableBroadcast]) extends ComponentDefinition {
 
