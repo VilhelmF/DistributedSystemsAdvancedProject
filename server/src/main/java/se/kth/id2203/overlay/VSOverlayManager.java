@@ -27,27 +27,23 @@ import com.larskroll.common.J6;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
-import scala.collection.Seq;
 import se.kth.id2203.bootstrapping.Booted;
 import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
-import se.kth.id2203.core.EagerReliableBroadcast;
+import se.kth.id2203.broadcasting.BroadcastMessage;
+import se.kth.id2203.broadcasting.Broadcasting;
+import se.kth.id2203.core.*;
 import se.kth.id2203.core.ExercisePrimitives.*;
-import se.kth.id2203.core.WaitingCRB;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
-import se.sics.kompics.ClassMatchedHandler;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.sics.kompics.sl.*;
-import scala.collection.immutable.Map;
+import se.kth.id2203.core.Ports.*;
+import scala.collection.immutable.HashMap;
 import java.util.Collection;
-
 
 /**
  * The V(ery)S(imple)OverlayManager.
@@ -67,6 +63,8 @@ public class VSOverlayManager extends ComponentDefinition {
     protected final Positive<Bootstrapping> boot = requires(Bootstrapping.class);
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
+    protected final Positive<Broadcasting> broadcast = requires(Broadcasting.class);
+
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
@@ -108,8 +106,9 @@ public class VSOverlayManager extends ComponentDefinition {
             //int i_key = Integer.parseInt(content.key);
             Collection<NetAddress> partition = lut.get(content.key);
             NetAddress target = J6.randomElement(partition);
-            LOG.info("Forwarding message for key {} to {}", content.key, target);
-            trigger(new Message(context.getSource(), target, content.msg), net);
+            LOG.info("Broadcasting message for key {} to {}", content.key, target);
+            //trigger(new Message(context.getSource(), target, content.msg), net);
+            trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
         }
     };
     protected final Handler<RouteMsg> localRouteHandler = new Handler<RouteMsg>() {
@@ -119,15 +118,19 @@ public class VSOverlayManager extends ComponentDefinition {
             Collection<NetAddress> partition = lut.lookup(event.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Routing message for key {} to {}", event.key, target);
-            Map<Address, Object> map = new Map<>();
+
+            /*
+            HashMap<Address, Object> map = new HashMap<>();
             for (NetAddress netAddress : partition) {
                 map = map.$plus(Tuple2.apply((Address) netAddress, (Object)0));
             }
             VectorClock vectorClock = new VectorClock(map);
-            //TODO WaitingCRB or EagerReliableBroadcast
-            trigger(new Message(self, target, event.msg), net);
+            */
+
+            trigger(new BroadcastMessage(self, event.msg, partition), broadcast);
         }
     };
+
     protected final ClassMatchedHandler<Connect, Message> connectHandler = new ClassMatchedHandler<Connect, Message>() {
 
         @Override

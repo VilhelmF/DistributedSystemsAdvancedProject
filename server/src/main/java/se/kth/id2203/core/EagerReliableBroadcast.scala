@@ -5,6 +5,7 @@ package se.kth.id2203.core
   */
 
 import se.kth.id2203.core.Ports._
+import se.kth.id2203.overlay.VSOverlayManager
 import se.sics.kompics.network._
 import se.sics.kompics.sl.{Init, _}
 import se.sics.kompics.{ComponentDefinition => _, Port => _, KompicsEvent}
@@ -39,5 +40,6 @@ class EagerReliableBroadcast(init: Init[EagerReliableBroadcast]) extends Compone
       }
     }
   }
+
 }
 
