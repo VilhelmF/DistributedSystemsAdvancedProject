@@ -50,40 +50,63 @@ public class KVService extends ComponentDefinition {
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private final HashMap<Integer, String> keyValueStore = new HashMap<>();
+
     //******* Handlers ******
-    protected final ClassMatchedHandler<Operation, Message> opHandler = new ClassMatchedHandler<Operation, Message>() {
+    protected final ClassMatchedHandler<GetOperation, Message> getHandler = new ClassMatchedHandler<GetOperation, Message>() {
 
         @Override
-        public void handle(Operation content, Message context) {
-
+        public void handle(GetOperation content, Message context) {
 
             if(keyValueStore.isEmpty()) {
                 keyValueStore.put(MurmurHasher.keyToHash("asdf1"), "Hestur");
                 keyValueStore.put(MurmurHasher.keyToHash("asdf2"), "Mús");
             }
 
-            LOG.info("Got operation {}!", content);
+            LOG.info("Got GET operation {}!", content);
 
             int hashedKey = MurmurHasher.keyToHash(content.key);
-            if (content.operation.equals("get")) {
-                String value = keyValueStore.get(hashedKey);
-                if (value == null) {
-                    trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
-                }
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
-            } else if (content.operation.equals("put")) {
-                //TODO
-                keyValueStore.put(hashedKey, content.value);
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
+            String value = keyValueStore.get(hashedKey);
+            if (value == null) {
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
             }
-
-            trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_IMPLEMENTED)), net);
+            trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
         }
 
     };
 
+    protected final ClassMatchedHandler<PutOperation, Message> putHandler = new ClassMatchedHandler<PutOperation, Message>() {
+
+        @Override
+        public void handle(PutOperation content, Message context) {
+            LOG.info("Got PUT operation {}!", content);
+            int hashedKey = MurmurHasher.keyToHash(content.key);
+            keyValueStore.put(hashedKey, content.value);
+            trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
+        }
+    };
+
+    protected final ClassMatchedHandler<CASOperation, Message> casHandler = new ClassMatchedHandler<CASOperation, Message>() {
+
+        @Override
+        public void handle(CASOperation content, Message context) {
+            LOG.info("Got CAS operation {}!", content);
+            int hashedKey = MurmurHasher.keyToHash(content.key);
+            String value = keyValueStore.get(hashedKey);
+            if (value == null) {
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
+            } else if (!value.equals(content.referenceValue)) {
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.KEY_MISMATCH)), net);
+            } else if (value.equals(content.referenceValue)) {
+                keyValueStore.put(hashedKey, content.newValue);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
+            }
+        }
+    };
+
     {
-        subscribe(opHandler, net);
+        subscribe(getHandler, net);
+        subscribe(putHandler, net);
+        subscribe(casHandler, net);
     }
 
 }

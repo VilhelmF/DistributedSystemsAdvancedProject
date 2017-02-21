@@ -19,16 +19,11 @@ public class BasicBroadcast extends ComponentDefinition {
 
             @Override
             public void handle(BroadcastMessage broadcastMessage) {
-
-                LOG.info("Broadcast: Received message. NIIIIIIIIIIIIIIIIIIIIIICE {}", broadcastMessage.recipients.size());
-
                 for (NetAddress address : broadcastMessage.recipients) {
                     trigger(new Message(broadcastMessage.src, address, broadcastMessage.msg), net);
                 }
             }
         };
-
-
     {
         subscribe(broadcastMessageHandler, broadcast);
     }

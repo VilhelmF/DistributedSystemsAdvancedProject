@@ -32,19 +32,15 @@ import se.sics.kompics.KompicsEvent;
  *
  * @author Lars Kroll <lkroll@kth.se>
  */
-public class Operation implements KompicsEvent, Serializable {
+public class GetOperation implements KompicsEvent, Serializable {
 
     private static final long serialVersionUID = 2525600659083087179L;
 
-    public final String operation;
     public final String key;
-    public final String value;
     public final UUID id;
 
-    public Operation(String operation, String key, String value) {
-        this.operation = operation;
+    public GetOperation(String key) {
         this.key = key;
-        this.value = value;
         this.id = UUID.randomUUID();
     }
 
@@ -52,9 +48,7 @@ public class Operation implements KompicsEvent, Serializable {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("id", id)
-                .add("operation", operation)
                 .add("key", key)
-                .add("value", value)
                 .toString();
     }
 }

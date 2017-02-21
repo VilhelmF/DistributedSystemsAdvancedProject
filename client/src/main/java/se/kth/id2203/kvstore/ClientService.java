@@ -103,10 +103,28 @@ public class ClientService extends ComponentDefinition {
             }
         }
     };
-    protected final Handler<OpWithFuture> opHandler = new Handler<OpWithFuture>() {
+    protected final Handler<GetWithFuture> getHandler = new Handler<GetWithFuture>() {
         
         @Override
-        public void handle(OpWithFuture event) {
+        public void handle(GetWithFuture event) {
+            RouteMsg rm = new RouteMsg(event.op.key, event.op); // don't know which partition is responsible, so ask the bootstrap server to forward it
+            trigger(new Message(self, server, rm), net);
+            pending.put(event.op.id, event.f);
+        }
+    };
+    protected final Handler<PutWithFuture> putHandler = new Handler<PutWithFuture>() {
+
+        @Override
+        public void handle(PutWithFuture event) {
+            RouteMsg rm = new RouteMsg(event.op.key, event.op); // don't know which partition is responsible, so ask the bootstrap server to forward it
+            trigger(new Message(self, server, rm), net);
+            pending.put(event.op.id, event.f);
+        }
+    };
+    protected final Handler<CASWithFuture> casHandler = new Handler<CASWithFuture>() {
+
+        @Override
+        public void handle(CASWithFuture event) {
             RouteMsg rm = new RouteMsg(event.op.key, event.op); // don't know which partition is responsible, so ask the bootstrap server to forward it
             trigger(new Message(self, server, rm), net);
             pending.put(event.op.id, event.f);
@@ -130,23 +148,61 @@ public class ClientService extends ComponentDefinition {
         subscribe(startHandler, control);
         subscribe(timeoutHandler, timer);
         subscribe(connectHandler, net);
-        subscribe(opHandler, loopback);
+        subscribe(getHandler, loopback);
+        subscribe(putHandler, loopback);
+        subscribe(casHandler, loopback);
         subscribe(responseHandler, net);
     }
     
-    Future<OpResponse> op(String operation, String key, String value) {
-        Operation op = new Operation(operation, key, value);
-        OpWithFuture owf = new OpWithFuture(op);
+    Future<OpResponse> get(String key) {
+        GetOperation op = new GetOperation(key);
+        GetWithFuture owf = new GetWithFuture(op);
+        trigger(owf, onSelf);
+        return owf.f;
+    }
+
+    Future<OpResponse> put(String key, String value) {
+        PutOperation op = new PutOperation(key, value);
+        PutWithFuture owf = new PutWithFuture(op);
+        trigger(owf, onSelf);
+        return owf.f;
+    }
+
+    Future<OpResponse> cas(String referenceValue, String key, String newValue) {
+        CASOperation op = new CASOperation(referenceValue, key, newValue);
+        CASWithFuture owf = new CASWithFuture(op);
         trigger(owf, onSelf);
         return owf.f;
     }
     
-    public static class OpWithFuture implements KompicsEvent {
+    public static class GetWithFuture implements KompicsEvent {
         
-        public final Operation op;
+        public final GetOperation op;
         public final SettableFuture<OpResponse> f;
         
-        public OpWithFuture(Operation op) {
+        public GetWithFuture(GetOperation op) {
+            this.op = op;
+            this.f = SettableFuture.create();
+        }
+    }
+
+    public static class PutWithFuture implements KompicsEvent {
+
+        public final PutOperation op;
+        public final SettableFuture<OpResponse> f;
+
+        public PutWithFuture(PutOperation op) {
+            this.op = op;
+            this.f = SettableFuture.create();
+        }
+    }
+
+    public static class CASWithFuture implements KompicsEvent {
+
+        public final CASOperation op;
+        public final SettableFuture<OpResponse> f;
+
+        public CASWithFuture(CASOperation op) {
             this.op = op;
             this.f = SettableFuture.create();
         }

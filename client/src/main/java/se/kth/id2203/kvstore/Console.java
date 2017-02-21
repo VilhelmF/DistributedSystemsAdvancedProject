@@ -70,11 +70,11 @@ public class Console implements Runnable {
             @Override
             public boolean execute(String[] cmdline, ClientService worker) {
                 if (cmdline.length == 2) {
-                    Future<OpResponse> fr = worker.op("get", cmdline[1], "");
-                    out.println("Operation sent! Awaiting response...");
+                    Future<OpResponse> fr = worker.get(cmdline[1]);
+                    out.println("Get Operation sent! Awaiting response...");
                     try {
                         OpResponse r = fr.get();
-                        out.println("Operation complete! Response was: " + r.status + " Value: " + r.response);
+                        out.println("Get Operation complete! Response was: " + r.status + " Value: " + r.response);
                         return true;
                     } catch (InterruptedException | ExecutionException ex) {
                         ex.printStackTrace(out);
@@ -103,11 +103,11 @@ public class Console implements Runnable {
                 if (cmdline.length == 2) {
                     String[] putParam = cmdline[1].split(" ", 2);
                     if (putParam.length == 2) {
-                        Future<OpResponse> fr = worker.op("put", putParam[0], putParam[1]);
-                        out.println("Operation sent! Awaiting response...");
+                        Future<OpResponse> fr = worker.put(putParam[0], putParam[1]);
+                        out.println("Put Operation sent! Awaiting response...");
                         try {
                             OpResponse r = fr.get();
-                            out.println("Operation complete! Response was: " + r.status);
+                            out.println("Put Operation complete! Response was: " + r.status);
                             return true;
                         } catch (InterruptedException | ExecutionException ex) {
                             ex.printStackTrace(out);
@@ -129,6 +129,41 @@ public class Console implements Runnable {
             @Override
             public String help() {
                 return "A put operation. Store the value with the given key";
+            }
+        });
+        commands.put("cas", new Command() {
+
+            @Override
+            public boolean execute(String[] cmdline, ClientService worker) {
+                if (cmdline.length == 2) {
+                    String[] casParam = cmdline[1].split(" ");
+                    if (casParam.length == 3) {
+                        Future<OpResponse> fr = worker.cas(casParam[0], casParam[1], casParam[2]);
+                        out.println("CAS Operation sent! Awaiting response...");
+                        try {
+                            OpResponse r = fr.get();
+                            out.println("CAS Operation complete! Response was: " + r.status);
+                            return true;
+                        } catch (InterruptedException | ExecutionException ex) {
+                            ex.printStackTrace(out);
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public String usage() {
+                return "cas <referenceValue, key, newValue>";
+            }
+
+            @Override
+            public String help() {
+                return "A CAS operation. Replace the reference value for the given key with the new value";
             }
         });
         commands.put("help", new Command() {
