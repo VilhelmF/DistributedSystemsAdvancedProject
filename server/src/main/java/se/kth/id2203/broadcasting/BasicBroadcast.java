@@ -12,7 +12,7 @@ public class BasicBroadcast extends ComponentDefinition {
 
     final static Logger LOG = LoggerFactory.getLogger(BasicBroadcast.class);
 
-        protected final Negative<Broadcasting> broadcast = provides(Broadcasting.class);
+        protected final Negative<BestEffortBroadcast> broadcast = provides(BestEffortBroadcast.class);
         protected final Positive<Network> net = requires(Network.class);
 
         protected final Handler<BroadcastMessage> broadcastMessageHandler = new Handler<BroadcastMessage>() {

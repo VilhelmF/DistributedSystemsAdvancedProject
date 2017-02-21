@@ -6,11 +6,11 @@ import se.sics.kompics.network.Msg;
 /**
  * Created by sindrikaldal on 18/02/17.
  */
-public class Broadcasting extends PortType {
+public class BestEffortBroadcast extends PortType {
     {
         positive(BroadcastMessage.class);
         negative(BroadcastMessage.class);
-        indication(BroadcastMessage.class);
-        request(BroadcastMessage.class);
+        indication(BEB_Deliver.class);
+        request(BEB_Broadcast.class);
     }
 }

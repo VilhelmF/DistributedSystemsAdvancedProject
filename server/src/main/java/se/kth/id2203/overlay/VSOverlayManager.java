@@ -32,7 +32,6 @@ import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
 import se.kth.id2203.broadcasting.BroadcastMessage;
-import se.kth.id2203.broadcasting.Broadcasting;
 import se.kth.id2203.core.*;
 import se.kth.id2203.core.ExercisePrimitives.*;
 import se.kth.id2203.networking.Message;
@@ -63,7 +62,7 @@ public class VSOverlayManager extends ComponentDefinition {
     protected final Positive<Bootstrapping> boot = requires(Bootstrapping.class);
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
-    protected final Positive<Broadcasting> broadcast = requires(Broadcasting.class);
+    protected final Positive<BestEffortBroadcast> broadcast = requires(BestEffortBroadcast.class);
 
 
     //******* Fields ******
