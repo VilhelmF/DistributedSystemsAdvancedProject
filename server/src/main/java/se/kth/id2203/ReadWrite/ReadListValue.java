@@ -3,7 +3,7 @@ package se.kth.id2203.ReadWrite;
 /**
  * Created by sindrikaldal on 21/02/17.
  */
-public class ReadListValue {
+public class ReadListValue implements Comparable {
     private int ts;
     private int wr;
     private Object value;
@@ -36,5 +36,16 @@ public class ReadListValue {
 
     public void setValue(Object value) {
         this.value = value;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        ReadListValue othervalue = (ReadListValue) o;
+
+        if (this.ts == othervalue.ts) {
+            return this.wr > othervalue.wr ? 1 : 0;
+        } else {
+            return this.ts > othervalue.ts ? 1 : 0;
+        }
     }
 }

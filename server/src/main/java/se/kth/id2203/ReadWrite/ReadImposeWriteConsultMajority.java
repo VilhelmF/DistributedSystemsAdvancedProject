@@ -1,13 +1,10 @@
 package se.kth.id2203.ReadWrite;
 
-import se.kth.id2203.atomicregister.AR_Read_Request;
-import se.kth.id2203.atomicregister.AR_Write_Request;
-import se.kth.id2203.atomicregister.AtomicRegister;
+import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.broadcasting.BEB_Broadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.PL_Send;
 import se.kth.id2203.broadcasting.PerfectLink;
-import se.kth.id2203.core.Ports;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -15,6 +12,8 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Address;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -93,11 +92,44 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             if (value.rid == rid) {
                 readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
                 if (readlist.size() > N / 2) {
+                    ReadListValue readListValue = Collections.max(readlist.values());
                     readlist.clear();
+                    readVal = readListValue.getValue();
+                    Object broadcastval;
+                    int maxts = readListValue.getTs();
+                    if (reading) {
+                        broadcastval = readVal;
+                        //TODO rr = selfRank
+                    } else {
+                        maxts++;
+                        broadcastval = writeVal;
+                    }
+                    trigger(new BEB_Broadcast(new Write(self, rid, maxts, readListValue.getWr(), broadcastval)), pLink);
                 }
             }
         }
     };
+
+    protected final Handler<Ack> ackHandler = new Handler<Ack>() {
+
+        @Override
+        public void handle(Ack ack) {
+            if (ack.rid == rid) {
+                acks++;
+                if (acks > N / 2) {
+                    acks = 0;
+                    if (reading) {
+                        reading = false;
+                        trigger(new AR_Read_Response(readVal), nnar);
+                    } else {
+                        trigger(new AR_Write_Response(), nnar);
+                    }
+                }
+            }
+        }
+    };
+
+
 
     public boolean isBigger(int writeWR, int writeTS, int wr, int ts) {
         if (writeWR == wr) {
@@ -113,6 +145,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         subscribe(bebDeliverReadHandler, beb);
         subscribe(bebDeliverWriteHandler, beb);
         subscribe(valueHandler, pLink);
+        subscribe(ackHandler, pLink);
     }
 
 
