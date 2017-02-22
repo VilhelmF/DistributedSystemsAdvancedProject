@@ -1,19 +1,12 @@
 package se.kth.id2203.broadcasting;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import se.kth.id2203.networking.Message;
-import se.kth.id2203.networking.NetAddress;
-import se.sics.kompics.*;
-import se.sics.kompics.network.*;
-
-import java.util.Collection;
+import se.sics.kompics.ComponentDefinition;
 
 public class BasicBroadcast extends ComponentDefinition {
 
 
-    final static Logger LOG = LoggerFactory.getLogger(BasicBroadcast.class);
+    /*final static Logger LOG = LoggerFactory.getLogger(BasicBroadcast.class);
 
         //******* Ports ******
         protected final Negative<BestEffortBroadcast> beb = provides(BestEffortBroadcast.class);
@@ -30,11 +23,10 @@ public class BasicBroadcast extends ComponentDefinition {
                 for (NetAddress address : topology) {
                     trigger(new Message(broadcastMessage.src, address, broadcastMessage.payload), net);
                 }
-                */
             }
         };
     {
         subscribe(broadcastMessageHandler, beb);
     }
-
+    */
 }

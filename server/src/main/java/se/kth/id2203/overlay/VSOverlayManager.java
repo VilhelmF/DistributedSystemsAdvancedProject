@@ -37,7 +37,9 @@ import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
+
 import java.util.Collection;
+import java.util.NavigableSet;
 
 /**
  * The V(ery)S(imple)OverlayManager.
@@ -71,13 +73,13 @@ public class VSOverlayManager extends ComponentDefinition {
         @Override
         public void handle(GetInitialAssignments event) {
             LOG.info("Generating LookupTable...");
-            //LookupTable lut = LookupTable.generate(event.nodes);
-            LookupTable lut = LookupTable.createEmpty();
+            LookupTable lut = LookupTable.generate(event.nodes);
+            /*LookupTable lut = LookupTable.createEmpty();
             int i = 0;
             for (NetAddress node : event.nodes) {
                lut.addNode(node, i);
                i++;
-            }
+            }*/
             LOG.debug("Generated assignments:\n{}", lut);
             trigger(new InitialAssignments(lut), boot);
         }
@@ -89,6 +91,19 @@ public class VSOverlayManager extends ComponentDefinition {
             if (event.assignment instanceof LookupTable) {
                 LOG.info("Got NodeAssignment, overlay ready.");
                 lut = (LookupTable) event.assignment;
+                LOG.info("I am: " + self);
+                LOG.info("My lookup table: ");
+                LOG.info(lut.toString());
+                NavigableSet<NetAddress> partition = lut.getPartition(self);
+                if(partition == null) {
+                    try {
+                        throw new Exception("Could not find self in lookup table. Initialization faulty.");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    System.exit(0);
+                }
+                LOG.info(partition.toString());
             } else {
                 LOG.error("Got invalid NodeAssignment type. Expected: LookupTable; Got: {}", event.assignment.getClass());
             }
