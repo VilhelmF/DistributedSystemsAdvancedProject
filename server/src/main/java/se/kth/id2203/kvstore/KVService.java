@@ -100,6 +100,8 @@ public class KVService extends ComponentDefinition {
 
             LOG.info("Received a PUT message");
 
+            LOG.info("First opid = " + content.id);
+
             pending.put(content.id, context.getSource());
             trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
 
@@ -116,7 +118,11 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(AR_Write_Response writeResponse) {
+            LOG.info("RECEIVED AR_WRITE_RESPONSE YEEAAH");
+            LOG.info("opID = " + writeResponse.opId.toString());
             NetAddress src = pending.get(writeResponse.opId);
+            LOG.info("src = " + src.toString());
+
             trigger(new Message(self, src, new OpResponse(writeResponse.opId, null, Code.OK)), net);
         }
     };
@@ -146,6 +152,7 @@ public class KVService extends ComponentDefinition {
         subscribe(putHandler, net);
         subscribe(casHandler, net);
         subscribe(readResponseHandler, atomicRegister);
+        subscribe(writeResponseHandler, atomicRegister);
     }
 
 }

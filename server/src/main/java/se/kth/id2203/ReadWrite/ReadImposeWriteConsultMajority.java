@@ -57,7 +57,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             writeVal = writeRequest.value;
             acks = 0;
             readlist.clear();
-            trigger(new BEB_Broadcast(self, new Read(self, rid, writeRequest.key, null)), beb);
+            trigger(new BEB_Broadcast(self, new Read(self, rid, writeRequest.key, writeRequest.opId)), beb);
         }
     };
 
@@ -76,7 +76,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         @Override
         public void handle(Read read, Message context) {
             LOG.info("RECEIVED READ inside RIWC");
-            trigger(new Message(self, read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
+            trigger(new Message(self, read.src, new Value(self, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
         }
     };
 
@@ -92,7 +92,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                 wr = write.wr;
                 keyValueStore.put(write.key, write.writeVal);
             }
-            trigger(new Message(self, write.src, new Ack(write.src, write.rid, write.opId)), net);
+            trigger(new Message(self, write.src, new Ack(self, write.rid, write.opId)), net);
         }
     };
 
@@ -136,8 +136,11 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     acks = 0;
                     if (reading) {
                         reading = false;
+                        LOG.info("Triggering AR_READ_RESPONSE");
                         trigger(new AR_Read_Response(readVal, ack.opId), nnar);
                     } else {
+                        LOG.info("Triggering AR_WRITE_RESPONSE");
+                        LOG.info("ACK : " + ack.opId);
                         trigger(new AR_Write_Response(ack.opId), nnar);
                     }
                 }
