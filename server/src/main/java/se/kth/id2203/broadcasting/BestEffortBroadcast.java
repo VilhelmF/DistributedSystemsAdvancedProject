@@ -8,8 +8,6 @@ import se.sics.kompics.network.Msg;
  */
 public class BestEffortBroadcast extends PortType {
     {
-        positive(BroadcastMessage.class);
-        negative(BroadcastMessage.class);
         indication(BEB_Deliver.class);
         request(BEB_Broadcast.class);
     }

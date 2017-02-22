@@ -26,10 +26,7 @@ package se.kth.id2203.kvstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.Util.MurmurHasher;
-import se.kth.id2203.atomicregister.AR_Read_Request;
-import se.kth.id2203.atomicregister.AR_Read_Response;
-import se.kth.id2203.atomicregister.AR_Write_Request;
-import se.kth.id2203.atomicregister.AtomicRegister;
+import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -80,12 +77,16 @@ public class KVService extends ComponentDefinition {
         }
     };
 
-    protected final Handler<AR_Read_Response> bebDeliverWriteHandler = new Handler<AR_Read_Response>() {
+    protected final Handler<AR_Read_Response> readResponseHandler = new Handler<AR_Read_Response>() {
 
         @Override
         public void handle(AR_Read_Response readResponse) {
             NetAddress src = pending.get(readResponse.id);
-            trigger(new Message(self, src, new OpResponse(readResponse.id, (String) readResponse.value, Code.OK)), net);
+            if (readResponse.value == null) {
+                trigger(new Message(self, src, new OpResponse(readResponse.id, null, Code.NOT_FOUND)), net);
+            } else {
+                trigger(new Message(self, src, new OpResponse(readResponse.id, (String) readResponse.value, Code.OK)), net);
+            }
         }
     };
 
@@ -97,12 +98,25 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(PutOperation content, Message context) {
+
+            pending.put(content.id, context.getSource());
+            trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
+
             /*
             LOG.info("Got PUT operation {}!", content);
             int hashedKey = MurmurHasher.keyToHash(content.key);
             keyValueStore.put(hashedKey, content.value);
             trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
             */
+        }
+    };
+
+    protected final Handler<AR_Write_Response> writeResponseHandler = new Handler<AR_Write_Response>() {
+
+        @Override
+        public void handle(AR_Write_Response writeResponse) {
+            NetAddress src = pending.get(writeResponse.opId);
+            trigger(new Message(self, src, new OpResponse(writeResponse.opId, null, Code.OK)), net);
         }
     };
 
@@ -130,6 +144,7 @@ public class KVService extends ComponentDefinition {
         subscribe(getHandler, net);
         subscribe(putHandler, net);
         subscribe(casHandler, net);
+        subscribe(readResponseHandler, atomicRegister);
     }
 
 }

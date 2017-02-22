@@ -43,7 +43,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             acks = 0;
             readlist.clear();
             reading = true;
-            trigger(new BEB_Broadcast(new Read(self, rid, readRequest.key)), beb);
+            trigger(new BEB_Broadcast(new Read(self, rid, readRequest.key, readRequest.id)), beb);
         }
     };
 
@@ -55,7 +55,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             writeVal = writeRequest.value;
             acks = 0;
             readlist.clear();
-            trigger(new BEB_Broadcast(new Read(self, rid, writeRequest.key)), beb);
+            trigger(new BEB_Broadcast(new Read(self, rid, writeRequest.key, null)), beb);
         }
     };
 
@@ -63,7 +63,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Read read) {
-            trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key))), pLink);
+            trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
         }
     };
 
@@ -76,7 +76,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                 wr = write.wr;
                 keyValueStore.put(write.key, write.writeVal);
             }
-            trigger(new PL_Send(write.src, new Ack(write.src, write.rid)), pLink);
+            trigger(new PL_Send(write.src, new Ack(write.src, write.rid, write.opId)), pLink);
         }
     };
 
@@ -100,7 +100,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                         rr = getRank(self);
                         broadcastval = writeVal;
                     }
-                    trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, value.key, broadcastval)), pLink);
+                    trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
                 }
             }
         }
@@ -116,9 +116,9 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     acks = 0;
                     if (reading) {
                         reading = false;
-                        trigger(new AR_Read_Response(readVal), nnar);
+                        trigger(new AR_Read_Response(readVal, ack.opId), nnar);
                     } else {
-                        trigger(new AR_Write_Response(), nnar);
+                        trigger(new AR_Write_Response(ack.opId), nnar);
                     }
                 }
             }
