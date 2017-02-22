@@ -1,6 +1,8 @@
 package se.kth.id2203;
 
 import com.google.common.base.Optional;
+import se.kth.id2203.ReadWrite.ReadImposeWriteConsultMajority;
+import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.bootstrapping.BootstrapClient;
 import se.kth.id2203.bootstrapping.BootstrapServer;
 import se.kth.id2203.bootstrapping.Bootstrapping;
@@ -25,6 +27,7 @@ public class ParentComponent
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<BestEffortBroadcast> broadcast = requires(BestEffortBroadcast.class);
+    protected final Positive<AtomicRegister> atomicRegister = requires(AtomicRegister.class);
     //******* Children ******
     protected final Component overlay = create(VSOverlayManager.class, Init.NONE);
     protected final Component kv = create(KVService.class, Init.NONE);
@@ -48,6 +51,7 @@ public class ParentComponent
         // KV
         connect(overlay.getPositive(Routing.class), kv.getNegative(Routing.class), Channel.TWO_WAY);
         connect(net, kv.getNegative(Network.class), Channel.TWO_WAY);
+        connect(atomicRegister, kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
         //BB
         connect(bb.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         connect(net, bb.getNegative(Network.class), Channel.TWO_WAY);

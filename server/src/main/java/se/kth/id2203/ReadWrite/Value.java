@@ -14,13 +14,15 @@ public class Value implements KompicsEvent, Serializable {
     public final int rid;
     public final int ts;
     public final int wr;
+    public final int key;
     public final Object value;
 
-    public Value(Address src, int rid, int ts, int wr, Object value) {
+    public Value(Address src, int rid, int ts, int wr, int key, Object value) {
         this.src = src;
         this.rid = rid;
         this.ts = ts;
         this.wr = wr;
+        this.key = key;
         this.value = value;
     }
 }

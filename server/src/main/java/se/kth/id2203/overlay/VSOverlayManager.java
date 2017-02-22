@@ -102,8 +102,8 @@ public class VSOverlayManager extends ComponentDefinition {
             Collection<NetAddress> partition = lut.get(content.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Broadcasting message for key {} to {}", content.key, target);
-            //trigger(new Message(context.getSource(), target, content.msg), net);
-            trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
+            trigger(new Message(context.getSource(), target, content.msg), net);
+            //trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
         }
     };
     protected final Handler<RouteMsg> localRouteHandler = new Handler<RouteMsg>() {

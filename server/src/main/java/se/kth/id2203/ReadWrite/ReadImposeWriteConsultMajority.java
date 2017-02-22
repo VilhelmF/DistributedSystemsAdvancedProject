@@ -5,7 +5,6 @@ import se.kth.id2203.broadcasting.BEB_Broadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.PL_Send;
 import se.kth.id2203.broadcasting.PerfectLink;
-import se.kth.id2203.core.ExercisePrimitives.*;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -26,7 +25,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private int timestamp = 0;
     private int wr = 0;
-    private Object value = null;
+    private final HashMap<Integer, Object> keyValueStore = new HashMap<>();
     private int acks = 0;
     private Object readVal = null;
     private Object writeVal = null;
@@ -44,7 +43,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             acks = 0;
             readlist.clear();
             reading = true;
-            trigger(new BEB_Broadcast(new Read(self, rid)), beb);
+            trigger(new BEB_Broadcast(new Read(self, rid, readRequest.key)), beb);
         }
     };
 
@@ -56,7 +55,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             writeVal = writeRequest.value;
             acks = 0;
             readlist.clear();
-            trigger(new BEB_Broadcast(new Read(self, rid)), beb);
+            trigger(new BEB_Broadcast(new Read(self, rid, writeRequest.key)), beb);
         }
     };
 
@@ -64,7 +63,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Read read) {
-            trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, value)), pLink);
+            trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key))), pLink);
         }
     };
 
@@ -75,7 +74,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             if (isBigger(write.wr, write.ts, wr, timestamp)) {
                 timestamp= write.ts;
                 wr = write.wr;
-                value = write.writeVal;
+                keyValueStore.put(write.key, write.writeVal);
             }
             trigger(new PL_Send(write.src, new Ack(write.src, write.rid)), pLink);
         }
@@ -101,7 +100,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                         rr = getRank(self);
                         broadcastval = writeVal;
                     }
-                    trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, broadcastval)), pLink);
+                    trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, value.key, broadcastval)), pLink);
                 }
             }
         }
@@ -125,7 +124,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             }
         }
     };
-
 
 
     public boolean isBigger(int writeWR, int writeTS, int wr, int ts) {

@@ -11,9 +11,11 @@ public class Read implements KompicsEvent {
 
     public final Address src;
     public final int rid;
+    public final int key;
 
-    public Read(Address src, int rid) {
+    public Read(Address src, int rid,  int key) {
         this.src = src;
         this.rid = rid;
+        this.key = key;
     }
 }

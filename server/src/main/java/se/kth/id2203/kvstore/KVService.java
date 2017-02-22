@@ -26,16 +26,22 @@ package se.kth.id2203.kvstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.Util.MurmurHasher;
+import se.kth.id2203.atomicregister.AR_Read_Request;
+import se.kth.id2203.atomicregister.AR_Read_Response;
+import se.kth.id2203.atomicregister.AR_Write_Request;
+import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.Routing;
 import se.sics.kompics.ClassMatchedHandler;
 import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 /**
  *
@@ -47,9 +53,10 @@ public class KVService extends ComponentDefinition {
     //******* Ports ******
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Routing> route = requires(Routing.class);
+    protected final Positive<AtomicRegister> atomicRegister = requires(AtomicRegister.class);
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    private final HashMap<Integer, String> keyValueStore = new HashMap<>();
+    private final HashMap<UUID, NetAddress> pending = new HashMap<>();
 
     //******* Handlers ******
     protected final ClassMatchedHandler<GetOperation, Message> getHandler = new ClassMatchedHandler<GetOperation, Message>() {
@@ -57,11 +64,10 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(GetOperation content, Message context) {
 
-            if(keyValueStore.isEmpty()) {
-                keyValueStore.put(MurmurHasher.keyToHash("asdf1"), "Hestur");
-                keyValueStore.put(MurmurHasher.keyToHash("asdf2"), "Mús");
-            }
+            pending.put(content.id, context.getSource());
+            trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
 
+            /*
             LOG.info("Got GET operation {}!", content);
 
             int hashedKey = MurmurHasher.keyToHash(content.key);
@@ -70,18 +76,33 @@ public class KVService extends ComponentDefinition {
                 trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
             }
             trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
+            */
         }
-
     };
+
+    protected final Handler<AR_Read_Response> bebDeliverWriteHandler = new Handler<AR_Read_Response>() {
+
+        @Override
+        public void handle(AR_Read_Response readResponse) {
+            NetAddress src = pending.get(readResponse.id);
+            trigger(new Message(self, src, new OpResponse(readResponse.id, (String) readResponse.value, Code.OK)), net);
+        }
+    };
+
+
+
+
 
     protected final ClassMatchedHandler<PutOperation, Message> putHandler = new ClassMatchedHandler<PutOperation, Message>() {
 
         @Override
         public void handle(PutOperation content, Message context) {
+            /*
             LOG.info("Got PUT operation {}!", content);
             int hashedKey = MurmurHasher.keyToHash(content.key);
             keyValueStore.put(hashedKey, content.value);
             trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
+            */
         }
     };
 
@@ -89,6 +110,7 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(CASOperation content, Message context) {
+            /*
             LOG.info("Got CAS operation {}!", content);
             int hashedKey = MurmurHasher.keyToHash(content.key);
             String value = keyValueStore.get(hashedKey);
@@ -100,6 +122,7 @@ public class KVService extends ComponentDefinition {
                 keyValueStore.put(hashedKey, content.newValue);
                 trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
             }
+            */
         }
     };
 

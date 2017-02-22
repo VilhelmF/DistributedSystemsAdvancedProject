@@ -3,12 +3,16 @@ package se.kth.id2203.atomicregister;
 import se.sics.kompics.KompicsEvent;
 
 import java.io.Serializable;
+import java.util.UUID;
 
-/**
- * Created by sindrikaldal on 21/02/17.
- */
 public class AR_Read_Request implements KompicsEvent, Serializable {
-    public AR_Read_Request() {
 
+
+    public final int key;
+    public final UUID id;
+
+    public AR_Read_Request(int key, UUID id) {
+        this.key = key;
+        this.id = id;
     }
 }
