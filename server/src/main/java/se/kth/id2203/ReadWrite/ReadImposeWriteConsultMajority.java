@@ -96,33 +96,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         }
     };
 
-    /*
-    protected final Handler<BEB_Deliver> bebDeliverHandler = new Handler<BEB_Deliver>() {
-
-        @Override
-        public void handle(BEB_Deliver beb_deliver) {
-
-            LOG.info("RECEIVED BEB DELIVER");
-
-            if (beb_deliver.payload instanceof Read) {
-                Read read = (Read) beb_deliver.payload;
-                trigger(new Message(self, read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
-                //trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
-            } else if (beb_deliver.payload instanceof Write){
-
-                Write write = (Write) beb_deliver.payload;
-
-                if (isBigger(write.wr, write.ts, wr, timestamp)) {
-                    timestamp= write.ts;
-                    wr = write.wr;
-                    keyValueStore.put(write.key, write.writeVal);
-                }
-                trigger(new Message(self, write.src, new Ack(write.src, write.rid, write.opId)), net);
-                //trigger(new PL_Send(write.src, new Ack(write.src, write.rid, write.opId)), pLink);
-            }
-        }
-    };*/
-
     protected final ClassMatchedHandler<Value, Message> valueHandler = new ClassMatchedHandler<Value, Message>() {
 
         @Override
@@ -146,7 +119,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                         rr = getRank(self);
                         broadcastval = writeVal;
                     }
-                    trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
+                    trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), beb);
                 }
             }
         }
