@@ -58,7 +58,6 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(GetOperation content, Message context) {
 
-
             LOG.info("Received a GET message");
 
             pending.put(content.id, context.getSource());

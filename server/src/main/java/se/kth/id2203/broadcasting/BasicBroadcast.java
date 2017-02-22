@@ -22,19 +22,29 @@ public class BasicBroadcast extends ComponentDefinition {
         //******* Fields ******
         private Collection<NetAddress> topology;
 
-        protected final Handler<BEB_Deliver> broadcastMessageHandler = new Handler<BEB_Deliver>() {
+        protected final Handler<BEB_Broadcast> broadcastMessageHandler = new Handler<BEB_Broadcast>() {
 
             @Override
-            public void handle(BEB_Deliver broadcastMessage) {
-                /*
+            public void handle(BEB_Broadcast broadcastMessage) {
+
+                LOG.info("Broadcasting message from BasicBroadcast component");
                 for (NetAddress address : topology) {
                     trigger(new Message(broadcastMessage.src, address, broadcastMessage.payload), net);
                 }
-                */
+            }
+        };
+
+        protected final Handler<TopologyMessage> topologyHandler = new Handler<TopologyMessage>() {
+            @Override
+            public void handle(TopologyMessage topologyMessage) {
+
+                LOG.info("Received new topology");
+                topology = topologyMessage.topology;
             }
         };
     {
         subscribe(broadcastMessageHandler, beb);
+        subscribe(topologyHandler, beb);
     }
 
 }

@@ -44,7 +44,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             acks = 0;
             readlist.clear();
             reading = true;
-            trigger(new BEB_Broadcast(new BEB_Deliver(self, new Read(self, rid, readRequest.key, readRequest.id))), beb);
+            trigger(new BEB_Broadcast(self, new Read(self, rid, readRequest.key, readRequest.id)), beb);
         }
     };
 
@@ -56,7 +56,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             writeVal = writeRequest.value;
             acks = 0;
             readlist.clear();
-            trigger(new BEB_Broadcast(new BEB_Deliver(self, new Read(self, rid, writeRequest.key, null))), beb);
+            trigger(new BEB_Broadcast(self, new Read(self, rid, writeRequest.key, null)), beb);
         }
     };
 
@@ -116,7 +116,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                             rr = getRank(self);
                             broadcastval = writeVal;
                         }
-                        trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
+                        trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
                     }
                 }
             }

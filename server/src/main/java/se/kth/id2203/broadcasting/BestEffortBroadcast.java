@@ -9,6 +9,7 @@ import se.sics.kompics.network.Msg;
 public class BestEffortBroadcast extends PortType {
     {
         indication(BEB_Deliver.class);
+        request(TopologyMessage.class);
         request(BEB_Broadcast.class);
     }
 }

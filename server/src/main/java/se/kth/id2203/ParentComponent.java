@@ -22,14 +22,13 @@ public class ParentComponent
     //******* Ports ******
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
-    protected final Positive<BestEffortBroadcast> broadcast = requires(BestEffortBroadcast.class);
+    protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
     protected final Positive<AtomicRegister> atomicRegisterPos = requires(AtomicRegister.class);
-    protected final Negative<AtomicRegister> atomicRegisterNeg = provides(AtomicRegister.class);
     //******* Children ******
     protected final Component overlay = create(VSOverlayManager.class, Init.NONE);
     protected final Component riwc = create(ReadImposeWriteConsultMajority.class, Init.NONE);
     protected final Component kv = create(KVService.class, Init.NONE);
-    protected final Component bb = create(BasicBroadcast.class, Init.NONE);
+    protected final Component basicbroadcast = create(BasicBroadcast.class, Init.NONE);
     protected final Component boot;
 
     {
@@ -45,16 +44,15 @@ public class ParentComponent
         // Overlay
         connect(boot.getPositive(Bootstrapping.class), overlay.getNegative(Bootstrapping.class), Channel.TWO_WAY);
         connect(net, overlay.getNegative(Network.class), Channel.TWO_WAY);
-        //connect(broadcast, overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+        connect(beb, overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         // KV
         connect(overlay.getPositive(Routing.class), kv.getNegative(Routing.class), Channel.TWO_WAY);
         connect(net, kv.getNegative(Network.class), Channel.TWO_WAY);
         connect(atomicRegisterPos, kv.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
         //BB
-        //connect(bb.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
-        //connect(net, bb.getNegative(Network.class), Channel.TWO_WAY);
+        connect(basicbroadcast.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+        connect(basicbroadcast.getPositive(BestEffortBroadcast.class), riwc.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         //RIWC
-        connect(riwc.getPositive(AtomicRegister.class), atomicRegisterNeg, Channel.TWO_WAY);
-
+        connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
     }
 }

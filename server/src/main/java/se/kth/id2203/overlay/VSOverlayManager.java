@@ -32,6 +32,7 @@ import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.BroadcastMessage;
+import se.kth.id2203.broadcasting.TopologyMessage;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
@@ -57,7 +58,7 @@ public class VSOverlayManager extends ComponentDefinition {
     protected final Positive<Bootstrapping> boot = requires(Bootstrapping.class);
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
-    protected final Positive<BestEffortBroadcast> broadcast = requires(BestEffortBroadcast.class);
+    protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
 
 
 
@@ -102,6 +103,7 @@ public class VSOverlayManager extends ComponentDefinition {
             Collection<NetAddress> partition = lut.get(content.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Broadcasting message for key {} to {}", content.key, target);
+            trigger(new TopologyMessage(partition), beb);
             trigger(new Message(context.getSource(), target, content.msg), net);
             //trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
         }
@@ -113,7 +115,7 @@ public class VSOverlayManager extends ComponentDefinition {
             Collection<NetAddress> partition = lut.lookup(event.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Routing message for key {} to {}", event.key, target);
-            trigger(new BroadcastMessage(self, event.msg, partition), broadcast);
+            trigger(new Message(self, target, event.msg), net);
         }
     };
 
