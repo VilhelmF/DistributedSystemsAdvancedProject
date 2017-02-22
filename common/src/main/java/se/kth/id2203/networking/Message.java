@@ -50,6 +50,8 @@ import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.PatternExtractor;
 import se.sics.kompics.network.Transport;
 
+import java.util.Collection;
+
 /**
  *
  * @author Lars Kroll <lkroll@kth.se>

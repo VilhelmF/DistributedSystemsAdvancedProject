@@ -1,10 +1,9 @@
 package se.kth.id2203.ReadWrite;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.kth.id2203.atomicregister.*;
-import se.kth.id2203.broadcasting.BEB_Broadcast;
-import se.kth.id2203.broadcasting.BestEffortBroadcast;
-import se.kth.id2203.broadcasting.PL_Send;
-import se.kth.id2203.broadcasting.PerfectLink;
+import se.kth.id2203.broadcasting.*;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -16,12 +15,13 @@ import java.util.HashMap;
 
 public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
-    //******* Portimestamp******
+    //******* Ports ******
     Negative<AtomicRegister> nnar = provides(AtomicRegister.class);
     Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
     Positive<PerfectLink> pLink = requires(PerfectLink.class);
 
     //******* Fields ******
+    final static Logger LOG = LoggerFactory.getLogger(ReadImposeWriteConsultMajority.class);
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private int timestamp = 0;
     private int wr = 0;
@@ -39,11 +39,12 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(AR_Read_Request readRequest) {
+            LOG.info("Received AR_READ_REQUEST inside RIWC");
             rid++;
             acks = 0;
             readlist.clear();
             reading = true;
-            trigger(new BEB_Broadcast(new Read(self, rid, readRequest.key, readRequest.id)), beb);
+            trigger(new BEB_Broadcast(new BEB_Deliver(self, new Read(self, rid, readRequest.key, readRequest.id))), beb);
         }
     };
 
@@ -55,10 +56,11 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             writeVal = writeRequest.value;
             acks = 0;
             readlist.clear();
-            trigger(new BEB_Broadcast(new Read(self, rid, writeRequest.key, null)), beb);
+            trigger(new BEB_Broadcast(new BEB_Deliver(self, new Read(self, rid, writeRequest.key, null))), beb);
         }
     };
 
+    /*
     protected final Handler<Read> bebDeliverReadHandler = new Handler<Read>() {
 
         @Override
@@ -66,46 +68,78 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
         }
     };
+    */
 
-    protected final Handler<Write> bebDeliverWriteHandler = new Handler<Write>() {
+    protected final Handler<BEB_Deliver> bebDeliverHandler = new Handler<BEB_Deliver>() {
 
         @Override
-        public void handle(Write write) {
-            if (isBigger(write.wr, write.ts, wr, timestamp)) {
-                timestamp= write.ts;
-                wr = write.wr;
-                keyValueStore.put(write.key, write.writeVal);
+        public void handle(BEB_Deliver beb_deliver) {
+
+            if (beb_deliver.payload instanceof Read) {
+                Read read = (Read) beb_deliver.payload;
+                trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
+            } else if (beb_deliver.payload instanceof Write){
+
+                Write write = (Write) beb_deliver.payload;
+
+                if (isBigger(write.wr, write.ts, wr, timestamp)) {
+                    timestamp= write.ts;
+                    wr = write.wr;
+                    keyValueStore.put(write.key, write.writeVal);
+                }
+                trigger(new PL_Send(write.src, new Ack(write.src, write.rid, write.opId)), pLink);
             }
-            trigger(new PL_Send(write.src, new Ack(write.src, write.rid, write.opId)), pLink);
+
+
         }
     };
 
-    protected final Handler<Value> valueHandler = new Handler<Value>() {
+    protected final Handler<PL_Deliver> plDeliverHandler = new Handler<PL_Deliver>() {
 
         @Override
-        public void handle(Value value) {
-            if (value.rid == rid) {
-                readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
-                if (readlist.size() > N / 2) {
-                    ReadListValue readListValue = Collections.max(readlist.values());
-                    readlist.clear();
-                    readVal = readListValue.getValue();
-                    Object broadcastval;
-                    int maxtimestamp= readListValue.getTs();
-                    int rr = readListValue.getWr();
-                    if (reading) {
-                        broadcastval = readVal;
-                    } else {
-                        maxtimestamp++;
-                        rr = getRank(self);
-                        broadcastval = writeVal;
+        public void handle(PL_Deliver pl_deliver) {
+            if (pl_deliver.payload instanceof Value) {
+                Value value = (Value) pl_deliver.payload;
+                if (value.rid == rid) {
+                    readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
+                    if (readlist.size() > N / 2) {
+                        ReadListValue readListValue = Collections.max(readlist.values());
+                        readlist.clear();
+                        readVal = readListValue.getValue();
+                        Object broadcastval;
+                        int maxtimestamp= readListValue.getTs();
+                        int rr = readListValue.getWr();
+                        if (reading) {
+                            broadcastval = readVal;
+                        } else {
+                            maxtimestamp++;
+                            rr = getRank(self);
+                            broadcastval = writeVal;
+                        }
+                        trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
                     }
-                    trigger(new BEB_Broadcast(new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
                 }
             }
+            else if (pl_deliver.payload instanceof Ack) {
+                Ack ack = (Ack) pl_deliver.payload;
+                if (ack.rid == rid) {
+                    acks++;
+                    if (acks > N / 2) {
+                        acks = 0;
+                        if (reading) {
+                            reading = false;
+                            trigger(new AR_Read_Response(readVal, ack.opId), nnar);
+                        } else {
+                            trigger(new AR_Write_Response(ack.opId), nnar);
+                        }
+                    }
+                }
+            }
+
         }
     };
 
+    /*
     protected final Handler<Ack> ackHandler = new Handler<Ack>() {
 
         @Override
@@ -124,7 +158,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             }
         }
     };
-
+    */
 
     public boolean isBigger(int writeWR, int writeTS, int wr, int ts) {
         if (writeWR == wr) {
@@ -141,10 +175,10 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     {
         subscribe(readRequestHandler, nnar);
         subscribe(writeRequestHandler, nnar);
-        subscribe(bebDeliverReadHandler, beb);
-        subscribe(bebDeliverWriteHandler, beb);
-        subscribe(valueHandler, pLink);
-        subscribe(ackHandler, pLink);
+        subscribe(bebDeliverHandler, beb);
+        //subscribe(bebDeliverWriteHandler, beb);
+        subscribe(plDeliverHandler, pLink);
+        //subscribe(ackHandler, pLink);
     }
 
 

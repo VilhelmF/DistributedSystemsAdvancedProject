@@ -12,11 +12,7 @@ import se.kth.id2203.kvstore.KVService;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.Routing;
 import se.kth.id2203.overlay.VSOverlayManager;
-import se.sics.kompics.Channel;
-import se.sics.kompics.Component;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Init;
-import se.sics.kompics.Positive;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 
@@ -27,7 +23,8 @@ public class ParentComponent
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<BestEffortBroadcast> broadcast = requires(BestEffortBroadcast.class);
-    protected final Positive<AtomicRegister> atomicRegister = requires(AtomicRegister.class);
+    protected final Positive<AtomicRegister> atomicRegisterPos = requires(AtomicRegister.class);
+    protected final Negative<AtomicRegister> atomicRegisterNeg = provides(AtomicRegister.class);
     //******* Children ******
     protected final Component overlay = create(VSOverlayManager.class, Init.NONE);
     protected final Component riwc = create(ReadImposeWriteConsultMajority.class, Init.NONE);
@@ -52,12 +49,12 @@ public class ParentComponent
         // KV
         connect(overlay.getPositive(Routing.class), kv.getNegative(Routing.class), Channel.TWO_WAY);
         connect(net, kv.getNegative(Network.class), Channel.TWO_WAY);
-        connect(atomicRegister, kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
+        connect(atomicRegisterPos, kv.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
         //BB
         //connect(bb.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         //connect(net, bb.getNegative(Network.class), Channel.TWO_WAY);
         //RIWC
-        connect(atomicRegister, riwc.getNegative(AtomicRegister.class), Channel.TWO_WAY);
+        connect(riwc.getPositive(AtomicRegister.class), atomicRegisterNeg, Channel.TWO_WAY);
 
     }
 }
