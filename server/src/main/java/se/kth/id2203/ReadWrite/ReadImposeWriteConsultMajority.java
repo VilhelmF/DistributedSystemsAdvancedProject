@@ -5,7 +5,7 @@ import se.kth.id2203.broadcasting.BEB_Broadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.PL_Send;
 import se.kth.id2203.broadcasting.PerfectLink;
-import se.kth.id2203.core.ExercisePrimitives.AddressUtils;
+import se.kth.id2203.core.ExercisePrimitives.*;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -137,7 +137,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     }
 
     public int getRank(Address address) {
-        return AddressUtils.toRank(address);
+        return address.getIp().getAddress().length;
     }
 
     {

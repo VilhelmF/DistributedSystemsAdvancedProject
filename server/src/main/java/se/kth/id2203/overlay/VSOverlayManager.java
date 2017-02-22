@@ -26,22 +26,17 @@ package se.kth.id2203.overlay;
 import com.larskroll.common.J6;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Tuple2;
 import se.kth.id2203.bootstrapping.Booted;
 import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
+import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.BroadcastMessage;
-import se.kth.id2203.core.*;
-import se.kth.id2203.core.ExercisePrimitives.*;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
-import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
-import se.kth.id2203.core.Ports.*;
-import scala.collection.immutable.HashMap;
 import java.util.Collection;
 
 /**
@@ -63,6 +58,7 @@ public class VSOverlayManager extends ComponentDefinition {
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<BestEffortBroadcast> broadcast = requires(BestEffortBroadcast.class);
+
 
 
     //******* Fields ******
@@ -117,15 +113,6 @@ public class VSOverlayManager extends ComponentDefinition {
             Collection<NetAddress> partition = lut.lookup(event.key);
             NetAddress target = J6.randomElement(partition);
             LOG.info("Routing message for key {} to {}", event.key, target);
-
-            /*
-            HashMap<Address, Object> map = new HashMap<>();
-            for (NetAddress netAddress : partition) {
-                map = map.$plus(Tuple2.apply((Address) netAddress, (Object)0));
-            }
-            VectorClock vectorClock = new VectorClock(map);
-            */
-
             trigger(new BroadcastMessage(self, event.msg, partition), broadcast);
         }
     };
