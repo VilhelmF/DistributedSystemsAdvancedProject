@@ -37,7 +37,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     private int rid = 0;
     private HashMap<Address, ReadListValue> readlist = new HashMap<>();
     private boolean reading = false;
-    private int N = 10; //TODO. Hvernig finnum við N
+    private int N = config().getValue("id2203.project.replicationDegree", Integer.class);
 
     //******* Handlers ******
     protected final Handler<AR_Read_Request> readRequestHandler = new Handler<AR_Read_Request>() {
@@ -97,14 +97,15 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     readVal = readListValue.getValue();
                     Object broadcastval;
                     int maxts = readListValue.getTs();
+                    int rr = readListValue.getWr();
                     if (reading) {
                         broadcastval = readVal;
-                        //TODO rr = selfRank
                     } else {
                         maxts++;
+                        rr = self.getPort(); // TODO find possibly more appropriate value
                         broadcastval = writeVal;
                     }
-                    trigger(new BEB_Broadcast(new Write(self, rid, maxts, readListValue.getWr(), broadcastval)), pLink);
+                    trigger(new BEB_Broadcast(new Write(self, rid, maxts, rr, broadcastval)), pLink);
                 }
             }
         }
