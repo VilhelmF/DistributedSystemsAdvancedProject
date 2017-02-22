@@ -31,7 +31,6 @@ import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
-import se.kth.id2203.broadcasting.BroadcastMessage;
 import se.kth.id2203.broadcasting.TopologyMessage;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -104,6 +103,8 @@ public class VSOverlayManager extends ComponentDefinition {
                     }
                     System.exit(0);
                 }
+                partition.remove(self);
+                LOG.info(self + ": The topolgy I'm sending - " + partition.toString());
                 trigger(new TopologyMessage(partition), beb);
                 LOG.info(partition.toString());
             } else {
