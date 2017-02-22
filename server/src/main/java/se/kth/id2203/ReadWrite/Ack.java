@@ -11,6 +11,8 @@ import java.util.UUID;
  */
 public class Ack implements KompicsEvent, Serializable {
 
+    private static final long serialVersionUID = -5669973156747202337L;
+
     public final Address src;
     public final int rid;
     public final UUID opId;

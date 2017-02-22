@@ -52,7 +52,9 @@ public class ParentComponent
         //BB
         connect(basicbroadcast.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         connect(basicbroadcast.getPositive(BestEffortBroadcast.class), riwc.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+        connect(net, basicbroadcast.getNegative(Network.class), Channel.TWO_WAY);
         //RIWC
         connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
+        connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
     }
 }

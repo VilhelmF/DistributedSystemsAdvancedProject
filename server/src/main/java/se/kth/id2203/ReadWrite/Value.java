@@ -11,6 +11,9 @@ import java.util.UUID;
  */
 public class Value implements KompicsEvent, Serializable {
 
+
+    private static final long serialVersionUID = -5639973156467202337L;
+
     public final Address src;
     public final int rid;
     public final int ts;

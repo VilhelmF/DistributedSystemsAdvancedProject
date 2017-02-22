@@ -4,12 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.broadcasting.*;
+import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Address;
+import se.sics.kompics.network.Network;
+
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -19,6 +19,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     Negative<AtomicRegister> nnar = provides(AtomicRegister.class);
     Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
     Positive<PerfectLink> pLink = requires(PerfectLink.class);
+    Positive<Network> net = requires(Network.class);
 
     //******* Fields ******
     final static Logger LOG = LoggerFactory.getLogger(ReadImposeWriteConsultMajority.class);
@@ -70,14 +71,43 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     };
     */
 
+    protected final ClassMatchedHandler<Read, Message> readHandler = new ClassMatchedHandler<Read, Message>() {
+
+        @Override
+        public void handle(Read read, Message context) {
+            LOG.info("RECEIVED READ inside RIWC");
+            trigger(new Message(self, read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
+        }
+    };
+
+    protected final ClassMatchedHandler<Write, Message> writeHandler = new ClassMatchedHandler<Write, Message>() {
+
+        @Override
+        public void handle(Write write, Message context) {
+
+            LOG.info("RECEIVED WRITE inside RIWC");
+
+            if (isBigger(write.wr, write.ts, wr, timestamp)) {
+                timestamp= write.ts;
+                wr = write.wr;
+                keyValueStore.put(write.key, write.writeVal);
+            }
+            trigger(new Message(self, write.src, new Ack(write.src, write.rid, write.opId)), net);
+        }
+    };
+
+    /*
     protected final Handler<BEB_Deliver> bebDeliverHandler = new Handler<BEB_Deliver>() {
 
         @Override
         public void handle(BEB_Deliver beb_deliver) {
 
+            LOG.info("RECEIVED BEB DELIVER");
+
             if (beb_deliver.payload instanceof Read) {
                 Read read = (Read) beb_deliver.payload;
-                trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
+                trigger(new Message(self, read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
+                //trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
             } else if (beb_deliver.payload instanceof Write){
 
                 Write write = (Write) beb_deliver.payload;
@@ -87,55 +117,58 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     wr = write.wr;
                     keyValueStore.put(write.key, write.writeVal);
                 }
-                trigger(new PL_Send(write.src, new Ack(write.src, write.rid, write.opId)), pLink);
+                trigger(new Message(self, write.src, new Ack(write.src, write.rid, write.opId)), net);
+                //trigger(new PL_Send(write.src, new Ack(write.src, write.rid, write.opId)), pLink);
             }
+        }
+    };*/
 
+    protected final ClassMatchedHandler<Value, Message> valueHandler = new ClassMatchedHandler<Value, Message>() {
 
+        @Override
+        public void handle(Value value, Message context) {
+
+            LOG.info("RECEIVED VALUE inside RIWC");
+
+            if (value.rid == rid) {
+                readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
+                if (readlist.size() > N / 2) {
+                    ReadListValue readListValue = Collections.max(readlist.values());
+                    readlist.clear();
+                    readVal = readListValue.getValue();
+                    Object broadcastval;
+                    int maxtimestamp= readListValue.getTs();
+                    int rr = readListValue.getWr();
+                    if (reading) {
+                        broadcastval = readVal;
+                    } else {
+                        maxtimestamp++;
+                        rr = getRank(self);
+                        broadcastval = writeVal;
+                    }
+                    trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
+                }
+            }
         }
     };
 
-    protected final Handler<PL_Deliver> plDeliverHandler = new Handler<PL_Deliver>() {
+    protected final ClassMatchedHandler<Ack, Message> ackHandler = new ClassMatchedHandler<Ack, Message>() {
 
         @Override
-        public void handle(PL_Deliver pl_deliver) {
-            if (pl_deliver.payload instanceof Value) {
-                Value value = (Value) pl_deliver.payload;
-                if (value.rid == rid) {
-                    readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
-                    if (readlist.size() > N / 2) {
-                        ReadListValue readListValue = Collections.max(readlist.values());
-                        readlist.clear();
-                        readVal = readListValue.getValue();
-                        Object broadcastval;
-                        int maxtimestamp= readListValue.getTs();
-                        int rr = readListValue.getWr();
-                        if (reading) {
-                            broadcastval = readVal;
-                        } else {
-                            maxtimestamp++;
-                            rr = getRank(self);
-                            broadcastval = writeVal;
-                        }
-                        trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), pLink);
+        public void handle(Ack ack, Message context) {
+            LOG.info("RECEIVED ACK inside RIWC");
+            if (ack.rid == rid) {
+                acks++;
+                if (acks > N / 2) {
+                    acks = 0;
+                    if (reading) {
+                        reading = false;
+                        trigger(new AR_Read_Response(readVal, ack.opId), nnar);
+                    } else {
+                        trigger(new AR_Write_Response(ack.opId), nnar);
                     }
                 }
             }
-            else if (pl_deliver.payload instanceof Ack) {
-                Ack ack = (Ack) pl_deliver.payload;
-                if (ack.rid == rid) {
-                    acks++;
-                    if (acks > N / 2) {
-                        acks = 0;
-                        if (reading) {
-                            reading = false;
-                            trigger(new AR_Read_Response(readVal, ack.opId), nnar);
-                        } else {
-                            trigger(new AR_Write_Response(ack.opId), nnar);
-                        }
-                    }
-                }
-            }
-
         }
     };
 
@@ -175,9 +208,10 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     {
         subscribe(readRequestHandler, nnar);
         subscribe(writeRequestHandler, nnar);
-        subscribe(bebDeliverHandler, beb);
-        //subscribe(bebDeliverWriteHandler, beb);
-        subscribe(plDeliverHandler, pLink);
+        subscribe(readHandler, net);
+        subscribe(writeHandler, net);
+        subscribe(valueHandler, net);
+        subscribe(ackHandler, net);
         //subscribe(ackHandler, pLink);
     }
 

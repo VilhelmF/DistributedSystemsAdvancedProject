@@ -98,6 +98,8 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(PutOperation content, Message context) {
 
+            LOG.info("Received a PUT message");
+
             pending.put(content.id, context.getSource());
             trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
 

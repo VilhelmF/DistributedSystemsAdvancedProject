@@ -1,16 +1,20 @@
 package se.kth.id2203.ReadWrite;
 
+import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.network.Address;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * Created by sindrikaldal on 21/02/17.
  */
-public class Write implements KompicsEvent {
+public class Write implements KompicsEvent, Serializable {
 
-    public Address src;
+    private static final long serialVersionUID = -5669973156467232337L;
+
+    public NetAddress src;
     public final int rid;
     public final int ts;
     public final int wr;
@@ -18,7 +22,7 @@ public class Write implements KompicsEvent {
     public final Object writeVal;
     public final UUID opId;
 
-    public Write(Address src, int rid, int ts, int wr, int key, Object writeVal, UUID opId) {
+    public Write(NetAddress src, int rid, int ts, int wr, int key, Object writeVal, UUID opId) {
         this.src = src;
         this.rid = rid;
         this.ts = ts;
