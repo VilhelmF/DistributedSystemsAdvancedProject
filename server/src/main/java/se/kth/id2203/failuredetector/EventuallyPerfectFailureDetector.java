@@ -9,7 +9,7 @@ public class EventuallyPerfectFailureDetector extends PortType {
 
     {
         indication(Suspect.class);
-        request(Restore.class);
+        indication(Restore.class);
 
     }
 }

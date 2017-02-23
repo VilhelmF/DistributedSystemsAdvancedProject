@@ -21,13 +21,13 @@ public class EPFD extends ComponentDefinition {
 
     //******* Ports ******
     protected final Positive<Timer> timer = requires(Timer.class);
-    protected final Positive<EventuallyPerfectFailureDetector> epfd = requires(EventuallyPerfectFailureDetector.class);
+    protected final Negative<EventuallyPerfectFailureDetector> epfd = provides(EventuallyPerfectFailureDetector.class);
     protected final Positive<Network> net = requires(Network.class);
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     final List<NetAddress> topology = new ArrayList<>(); //TODO initialize topology
-    final long delta = 0; //cfg.getValue[Long]("epfd.simulation.delay");
+    final long delta = 0; //cfg.getValue[Long]("epfd.simulation.delay"); //TODO find delta
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
@@ -47,9 +47,7 @@ public class EPFD extends ComponentDefinition {
             if (!Sets.intersection(Sets.newHashSet(alive), suspcected).isEmpty()) {
                 period += delta;
             }
-
             seqnum++;
-
             for (NetAddress address : topology) {
                 if (!alive.contains(address) && !suspcected.contains(address)) {
                     suspcected.add(address);

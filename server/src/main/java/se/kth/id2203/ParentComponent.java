@@ -61,6 +61,6 @@ public class ParentComponent
         connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
         connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
         //EPFD
-        connect(overlay.getPositive(EventuallyPerfectFailureDetector.class), epfd.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
+        connect(epfd.getPositive(EventuallyPerfectFailureDetector.class), overlay.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
     }
 }

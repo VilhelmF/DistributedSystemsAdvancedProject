@@ -60,7 +60,7 @@ public class VSOverlayManager extends ComponentDefinition {
     //******* Ports ******
 
     protected final Negative<Routing> route = provides(Routing.class);
-    protected final Negative<EventuallyPerfectFailureDetector> epfd = provides(EventuallyPerfectFailureDetector.class);
+    protected final Positive<EventuallyPerfectFailureDetector> epfd = requires(EventuallyPerfectFailureDetector.class);
     protected final Positive<Bootstrapping> boot = requires(Bootstrapping.class);
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
@@ -71,7 +71,6 @@ public class VSOverlayManager extends ComponentDefinition {
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private LookupTable lut = null;
-    private NavigableSet<NetAddress> partition = null;
 
     //******* Handlers ******
     protected final Handler<GetInitialAssignments> initialAssignmentHandler = new Handler<GetInitialAssignments>() {
@@ -100,7 +99,7 @@ public class VSOverlayManager extends ComponentDefinition {
                 LOG.info("I am: " + self);
                 LOG.info("My lookup table: ");
                 LOG.info(lut.toString());
-                partition = lut.getPartition(self);
+                NavigableSet<NetAddress> partition = lut.getPartition(self);
                 if(partition == null) {
                     try {
                         throw new Exception("Could not find self in lookup table. Initialization faulty.");
@@ -159,8 +158,7 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(Suspect event) {
-            partition.remove(event.process);
-            trigger(new TopologyMessage(partition), beb);
+            //TODO handle suspect
         }
     };
 
@@ -168,8 +166,7 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(Restore event) {
-            partition.add(event.process);
-            trigger(new TopologyMessage(partition), beb);
+            //TODO handle restore
         }
     };
 
