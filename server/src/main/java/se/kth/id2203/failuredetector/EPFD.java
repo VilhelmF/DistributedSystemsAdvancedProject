@@ -29,12 +29,12 @@ public class EPFD extends ComponentDefinition {
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    final long delta = 5; //cfg.getValue[Long]("epfd.simulation.delay");
+    final long delta = 1; //cfg.getValue[Long]("epfd.simulation.delay");
     private NavigableSet<NetAddress> topology;
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 10; //TODO find proper period
+    private int period = 10000; //TODO find proper period
 
     //******* Handlers ******
     /*protected final Handler<Start> startHandler = new Handler<Start>() {
