@@ -12,5 +12,6 @@ public class EventuallyPerfectFailureDetector extends PortType {
         indication(Suspect.class);
         indication(Restore.class);
         request(TopologyMessage.class);
+        request(StartMessage.class);
     }
 }
