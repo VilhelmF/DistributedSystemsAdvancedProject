@@ -106,10 +106,8 @@ public class VSOverlayManager extends ComponentDefinition {
                     System.exit(0);
                 }
                 partition.remove(self);
-                LOG.info(self + ": The topolgy I'm sending - " + partition.toString());
                 trigger(new TopologyMessage(partition), beb);
                 trigger(new StartMessage(partition), epfd);
-                LOG.info(partition.toString());
             } else {
                 LOG.error("Got invalid NodeAssignment type. Expected: LookupTable; Got: {}", event.assignment.getClass());
             }
@@ -121,7 +119,6 @@ public class VSOverlayManager extends ComponentDefinition {
         public void handle(RouteMsg content, Message context) {
             //int i_key = Integer.parseInt(content.key);
             Collection<NetAddress> partition = lut.get(content.key);
-            LOG.info("Received this partition: " + partition.toString());
             NetAddress target = J6.randomElement(partition);
             LOG.info("Broadcasting message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);

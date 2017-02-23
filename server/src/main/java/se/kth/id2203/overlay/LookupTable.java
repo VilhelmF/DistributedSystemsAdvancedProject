@@ -34,8 +34,6 @@ import java.util.Collection;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
-import static se.kth.id2203.overlay.VSOverlayManager.LOG;
-
 /**
  *
  * @author Lars Kroll <lkroll@kth.se>
@@ -59,14 +57,10 @@ public class LookupTable implements NodeAssignment {
 
         int hashedKey = MurmurHasher.keyToHash(key);
         if(hashedKey < 0) hashedKey *= -1;
-        LOG.info("Size of keyset is" + partitions.keySet().size());
         int moddedKey = hashedKey % partitions.keySet().size();
-        LOG.info("Modded key is: " +  moddedKey);
         int partition = partitions.keySet().last();
         if (this.partitions.containsKey(moddedKey)) partition = moddedKey;
-        LOG.info(partitions.toString());
         Collection<NetAddress> p = partitions.get(partition);
-        LOG.info(p.toString());
         return partitions.get(partition);
     }
 
