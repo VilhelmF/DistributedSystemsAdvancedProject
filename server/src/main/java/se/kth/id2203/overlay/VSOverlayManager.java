@@ -82,13 +82,8 @@ public class VSOverlayManager extends ComponentDefinition {
         @Override
         public void handle(GetInitialAssignments event) {
             LOG.info("Generating LookupTable...");
-            LookupTable lut = LookupTable.generate(event.nodes);
-            /*LookupTable lut = LookupTable.createEmpty();
-            int i = 0;
-            for (NetAddress node : event.nodes) {
-               lut.addNode(node, i);
-               i++;
-            }*/
+            //LookupTable lut = LookupTable.generate(event.nodes);
+            LookupTable lut = LookupTable.generatePartitionedTable(event.nodes, event.partitions, event.partitionSize);
             LOG.debug("Generated assignments:\n{}", lut);
             trigger(new InitialAssignments(lut), boot);
         }
@@ -113,10 +108,8 @@ public class VSOverlayManager extends ComponentDefinition {
                     System.exit(0);
                 }
                 partition.remove(self);
-                LOG.info(self + ": The topolgy I'm sending - " + partition.toString());
                 trigger(new TopologyMessage(partition), beb);
                 trigger(new StartMessage(partition), epfd);
-                LOG.info(partition.toString());
             } else {
                 LOG.error("Got invalid NodeAssignment type. Expected: LookupTable; Got: {}", event.assignment.getClass());
             }
@@ -163,8 +156,9 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(Suspect event) {
-            partition.remove(event.process);
-            trigger(new TopologyMessage(partition), beb);
+            //partition.remove(event.process);
+            LOG.info("Forwarding suspect to beb " + event.process.toString());
+            trigger(event, beb);
         }
     };
 
@@ -172,8 +166,10 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(Restore event) {
-            partition.add(event.process);
-            trigger(new TopologyMessage(partition), beb);
+            //partition.add(event.process);
+            //trigger(new TopologyMessage(partition), beb);
+            LOG.info("Forwarding restore to beb " + event.process.toString());
+            trigger(event, beb);
         }
     };
 

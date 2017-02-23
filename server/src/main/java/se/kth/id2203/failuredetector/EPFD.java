@@ -70,6 +70,7 @@ public class EPFD extends ComponentDefinition {
             LOG.info("Checking timeout");
             LOG.info("Topology size : " + topology.size());
             seqnum++;
+            LOG.info("My topology: " + topology.toString());
             for (NetAddress address : topology) {
                 LOG.info("Checking " + address.toString());
                 if (!alive.contains(address) && !suspcected.contains(address)) {

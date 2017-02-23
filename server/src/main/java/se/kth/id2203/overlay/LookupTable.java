@@ -32,6 +32,7 @@ import se.kth.id2203.networking.NetAddress;
 
 import java.util.Collection;
 import java.util.NavigableSet;
+import java.util.TreeSet;
 
 /**
  *
@@ -55,9 +56,11 @@ public class LookupTable implements NodeAssignment {
     public Collection<NetAddress> get(String key) {
 
         int hashedKey = MurmurHasher.keyToHash(key);
-
+        if(hashedKey < 0) hashedKey *= -1;
+        int moddedKey = hashedKey % partitions.keySet().size();
         int partition = partitions.keySet().last();
-        if (this.partitions.containsKey(hashedKey)) partition = hashedKey;
+        if (this.partitions.containsKey(moddedKey)) partition = moddedKey;
+        Collection<NetAddress> p = partitions.get(partition);
         return partitions.get(partition);
     }
 
@@ -90,13 +93,32 @@ public class LookupTable implements NodeAssignment {
         return lut;
     }
 
+    static LookupTable generatePartitionedTable(ImmutableSet<NetAddress> nodes, int partitions, int partitionSize) {
+        LookupTable lut = new LookupTable();
+        int nodeCount = 0;
+        int partition = 0;
+
+        for(NetAddress netAddress : nodes) {
+            lut.addNode(netAddress, partition);
+            nodeCount++;
+            if(nodeCount >= partitionSize) {
+                partition++;
+                nodeCount = 0;
+            }
+        }
+
+        return lut;
+    }
+
     public NavigableSet<NetAddress> getPartition(NetAddress na) {
         for(Integer key : partitions.keySet()) {
-            if(partitions.get(key).contains(na))
-                return partitions.get(key);
+            if(partitions.get(key).contains(na)) {
+                return new TreeSet<>(partitions.get(key));
+            }
         }
         return null;
     }
+
 
     void addNode(NetAddress node, int key) {
         this.partitions.get(key).add(node);

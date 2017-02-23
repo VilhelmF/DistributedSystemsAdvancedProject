@@ -25,13 +25,15 @@ package se.kth.id2203.kvstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.Util.MurmurHasher;
 import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.Routing;
-import se.sics.kompics.*;
+import se.sics.kompics.ClassMatchedHandler;
+import se.sics.kompics.ComponentDefinition;
+import se.sics.kompics.Handler;
+import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 
 import java.util.HashMap;
@@ -58,6 +60,7 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(GetOperation content, Message context) {
             pending.put(content.id, context.getSource());
+            LOG.info("Received a get request");
             trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
         }
     };

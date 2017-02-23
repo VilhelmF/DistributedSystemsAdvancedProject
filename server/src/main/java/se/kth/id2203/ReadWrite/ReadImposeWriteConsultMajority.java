@@ -3,7 +3,9 @@ package se.kth.id2203.ReadWrite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.atomicregister.*;
-import se.kth.id2203.broadcasting.*;
+import se.kth.id2203.broadcasting.BEB_Broadcast;
+import se.kth.id2203.broadcasting.BestEffortBroadcast;
+import se.kth.id2203.failuredetector.Suspect;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -49,6 +51,14 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             readlist.clear();
             reading = true;
             trigger(new BEB_Broadcast(self, new Read(self, rid, readRequest.key, readRequest.id)), beb);
+        }
+    };
+
+    protected final Handler<Suspect> suspectHandler = new Handler<Suspect>() {
+
+        @Override
+        public void handle(Suspect event) {
+                //TODO
         }
     };
 
