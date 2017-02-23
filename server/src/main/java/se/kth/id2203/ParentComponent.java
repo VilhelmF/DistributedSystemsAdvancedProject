@@ -8,6 +8,8 @@ import se.kth.id2203.bootstrapping.BootstrapServer;
 import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.BasicBroadcast;
+import se.kth.id2203.failuredetector.EPFD;
+import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
 import se.kth.id2203.kvstore.KVService;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.Routing;
@@ -29,7 +31,9 @@ public class ParentComponent
     protected final Component riwc = create(ReadImposeWriteConsultMajority.class, Init.NONE);
     protected final Component kv = create(KVService.class, Init.NONE);
     protected final Component basicbroadcast = create(BasicBroadcast.class, Init.NONE);
+    protected final Component epfd = create(EPFD.class, Init.NONE);
     protected final Component boot;
+
 
     {
 
@@ -56,5 +60,7 @@ public class ParentComponent
         //RIWC
         connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
         connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
+        //EPFD
+        connect(overlay.getPositive(EventuallyPerfectFailureDetector.class), epfd.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
     }
 }

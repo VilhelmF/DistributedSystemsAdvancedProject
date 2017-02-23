@@ -32,6 +32,9 @@ import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.TopologyMessage;
+import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
+import se.kth.id2203.failuredetector.Restore;
+import se.kth.id2203.failuredetector.Suspect;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
@@ -55,7 +58,9 @@ public class VSOverlayManager extends ComponentDefinition {
 
     final static Logger LOG = LoggerFactory.getLogger(VSOverlayManager.class);
     //******* Ports ******
+
     protected final Negative<Routing> route = provides(Routing.class);
+    protected final Negative<EventuallyPerfectFailureDetector> epfd = provides(EventuallyPerfectFailureDetector.class);
     protected final Positive<Bootstrapping> boot = requires(Bootstrapping.class);
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
@@ -149,11 +154,29 @@ public class VSOverlayManager extends ComponentDefinition {
         }
     };
 
+    protected final Handler<Suspect> suspectHandler = new Handler<Suspect>() {
+
+        @Override
+        public void handle(Suspect event) {
+            //TODO handle suspect
+        }
+    };
+
+    protected final Handler<Restore> restoreHandler = new Handler<Restore>() {
+
+        @Override
+        public void handle(Restore event) {
+            //TODO handle restore
+        }
+    };
+
     {
         subscribe(initialAssignmentHandler, boot);
         subscribe(bootHandler, boot);
         subscribe(routeHandler, net);
         subscribe(localRouteHandler, route);
         subscribe(connectHandler, net);
+        subscribe(suspectHandler, epfd);
+        subscribe(restoreHandler, epfd);
     }
 }

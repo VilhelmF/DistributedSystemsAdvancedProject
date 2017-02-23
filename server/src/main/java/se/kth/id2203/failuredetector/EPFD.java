@@ -23,14 +23,14 @@ public class EPFD extends ComponentDefinition {
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<EventuallyPerfectFailureDetector> epfd = requires(EventuallyPerfectFailureDetector.class);
     protected final Positive<Network> net = requires(Network.class);
-    //******* Fields ******
 
+    //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    final List<NetAddress> topology = new ArrayList<>(); //TODO initalize topology
+    final List<NetAddress> topology = new ArrayList<>(); //TODO initialize topology
     final long delta = 0; //cfg.getValue[Long]("epfd.simulation.delay");
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
-    private List<Address> alive = new ArrayList<>(); // TODO initalize with proper values
+    private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
     private int period = 10; //TODO find proper period
 
     //******* Handlers ******
