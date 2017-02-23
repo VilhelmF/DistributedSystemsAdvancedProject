@@ -162,6 +162,7 @@ public class VSOverlayManager extends ComponentDefinition {
         @Override
         public void handle(Suspect event) {
             //partition.remove(event.process);
+            LOG.info("Forwarding suspect to beb " + event.process.toString());
             trigger(event, beb);
         }
     };
@@ -172,6 +173,7 @@ public class VSOverlayManager extends ComponentDefinition {
         public void handle(Restore event) {
             //partition.add(event.process);
             //trigger(new TopologyMessage(partition), beb);
+            LOG.info("Forwarding restore to beb " + event.process.toString());
             trigger(event, beb);
         }
     };
