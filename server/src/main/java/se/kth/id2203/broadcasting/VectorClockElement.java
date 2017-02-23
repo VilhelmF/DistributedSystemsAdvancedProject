@@ -2,10 +2,9 @@ package se.kth.id2203.broadcasting;
 
 import se.sics.kompics.network.Address;
 
-/**
- * Created by sindrikaldal on 17/02/17.
- */
-public class VectorClockElement {
+import java.io.Serializable;
+
+public class VectorClockElement implements Serializable {
 
     private Address address;
     private int value;

@@ -29,6 +29,7 @@ public class EagerReliableBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(RB_Broadcast broadcastMessage) {
+            LOG.info("SENDING NEW ORIGINATED DATA");
             trigger(new BEB_Broadcast(broadcastMessage.src, new OriginatedData(broadcastMessage.src, broadcastMessage.payload)), beb);
         }
     };
@@ -37,10 +38,16 @@ public class EagerReliableBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(OriginatedData data, Message context) {
+            LOG.info("RB: Received OriginatedData from net");
+            LOG.info("Payload : " + data.payload.toString());
+            LOG.info("Delivered size : " + delivered.size());
             if (!delivered.contains(data.payload)) {
                 delivered.add(data.payload);
+                LOG.info("Delivered contains : " + delivered.contains(data.payload));
                 trigger(new RB_Deliver(data.src, data.payload), rb);
                 trigger(new BEB_Broadcast(context.getSource(), data), beb);
+            } else {
+                LOG.info("DIDN'T SEND BEB_BROADCAST. HAD DATA");
             }
         }
     };

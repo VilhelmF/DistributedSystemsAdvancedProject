@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.broadcasting.*;
-import se.kth.id2203.failuredetector.Suspect;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -19,7 +18,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
     //******* Ports ******
     Negative<AtomicRegister> nnar = provides(AtomicRegister.class);
-    Positive<CausalOrderReliableBroadcast> crb = requires(CausalOrderReliableBroadcast.class);
+    Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
     Positive<Network> net = requires(Network.class);
 
     //******* Fields ******
@@ -49,15 +48,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             acks = 0;
             readlist.clear();
             reading = true;
-            trigger(new CRB_Broadcast(self, new Read(self, rid, readRequest.key, readRequest.id)), crb);
-        }
-    };
-
-    protected final Handler<Suspect> suspectHandler = new Handler<Suspect>() {
-
-        @Override
-        public void handle(Suspect event) {
-                //TODO
+            trigger(new BEB_Broadcast(self, new Read(self, rid, readRequest.key, readRequest.id)), beb);
         }
     };
 
@@ -71,7 +62,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             acks = 0;
             readlist.clear();
             cas = true;
-            trigger(new CRB_Broadcast(self, new Read(self, rid, casRequest.key, casRequest.opId)), crb);
+            trigger(new BEB_Broadcast(self, new Read(self, rid, casRequest.key, casRequest.opId)), beb);
         }
     };
 
@@ -83,58 +74,28 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             writeVal = writeRequest.value;
             acks = 0;
             readlist.clear();
-            trigger(new CRB_Broadcast(self, new Read(self, rid, writeRequest.key, writeRequest.opId)), crb);
+            trigger(new BEB_Broadcast(self, new Read(self, rid, writeRequest.key, writeRequest.opId)), beb);
         }
     };
 
-    protected final Handler<CRB_Deliver> crbDeliverHandler = new Handler<CRB_Deliver>() {
+    protected final ClassMatchedHandler<Read, Message> readHandler = new ClassMatchedHandler<Read, Message>() {
 
         @Override
-        public void handle(CRB_Deliver crb_deliver) {
-            if (crb_deliver.payload instanceof Read) {
-                Read read = (Read) crb_deliver.payload;
-                trigger(new Message(self, read.src, new Value(self, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
-            }
-            else if (crb_deliver.payload instanceof Write) {
-                Write write = (Write) crb_deliver.payload;
-
-                if (isBigger(write.wr, write.ts, wr, timestamp)) {
-                    timestamp= write.ts;
-                    wr = write.wr;
-                    keyValueStore.put(write.key, write.writeVal);
-                }
-                trigger(new Message(self, write.src, new Ack(self, write.rid, write.opId)), net);
-            }
-
+        public void handle(Read read, Message context) {
+            trigger(new Message(self, read.src, new Value(self, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
         }
     };
 
-    /*
-    protected final Handler<Write> writeHandler = new Handler<Write>() {
+    protected final ClassMatchedHandler<Write, Message> writeHandler = new ClassMatchedHandler<Write, Message>() {
 
         @Override
-        public void handle(Write write) {
+        public void handle(Write write, Message context) {
             if (isBigger(write.wr, write.ts, wr, timestamp)) {
                 timestamp= write.ts;
                 wr = write.wr;
                 keyValueStore.put(write.key, write.writeVal);
             }
             trigger(new Message(self, write.src, new Ack(self, write.rid, write.opId)), net);
-        }
-    };
-    */
-    protected final ClassMatchedHandler<CAS, Message> casHandler = new ClassMatchedHandler<CAS, Message>() {
-
-        @Override
-        public void handle(CAS cas, Message context) {
-            /*
-            if (isBigger(cas.wr, write.ts, wr, timestamp)) {
-                timestamp= write.ts;
-                wr = write.wr;
-                keyValueStore.put(write.key, write.writeVal);
-            }
-            trigger(new Message(self, write.src, new Ack(self, write.rid, write.opId)), net);
-            */
         }
     };
 
@@ -169,7 +130,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                             broadcastval = writeVal;
                         }
                     }
-                    trigger(new CRB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), crb);
+                    trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), beb);
                 }
             }
         }
@@ -213,9 +174,11 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         subscribe(readRequestHandler, nnar);
         subscribe(writeRequestHandler, nnar);
         subscribe(casRequestHandler, nnar);
-        subscribe(crbDeliverHandler, crb);
-        //subscribe(writeHandler, crb);
+        subscribe(readHandler, net);
+        subscribe(writeHandler, net);
         subscribe(valueHandler, net);
         subscribe(ackHandler, net);
     }
+
+
 }

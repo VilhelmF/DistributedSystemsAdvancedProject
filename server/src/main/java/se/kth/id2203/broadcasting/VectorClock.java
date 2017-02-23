@@ -2,6 +2,7 @@ package se.kth.id2203.broadcasting;
 
 import se.sics.kompics.network.Address;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -9,7 +10,7 @@ import java.util.Vector;
 /**
  * Created by sindrikaldal on 17/02/17.
  */
-public class VectorClock implements Comparable {
+public class VectorClock implements Comparable, Serializable {
 
     List<VectorClockElement> vectorClock;
 

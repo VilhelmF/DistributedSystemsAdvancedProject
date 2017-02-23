@@ -2,6 +2,7 @@ package se.kth.id2203.broadcasting;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.ComponentDefinition;
 import se.sics.kompics.Handler;
@@ -50,6 +51,7 @@ public class WaitingCRB extends ComponentDefinition {
 
         @Override
         public void handle(RB_Deliver broadcastMessage) {
+            LOG.info("CRB: Received RB_DELIVER");
             DataMessage dataMessage = (DataMessage) broadcastMessage.payload;
             pending.add(new PendingElement(broadcastMessage.src, dataMessage));
             Collections.sort(pending);
@@ -57,7 +59,8 @@ public class WaitingCRB extends ComponentDefinition {
                 if (dataMessage.vec.compareTo(vec) == 0) {
                     pending.remove(element);
                     vec.inc(element.getSrc());
-                    trigger(new CRB_Deliver(element.getSrc(), element.getMsg().payload), crb);
+                    LOG.info("RB: Sending CRB_DELIVER");
+                    trigger(new Message(self, element.getSrc(), new CRB_Deliver(element.getSrc(), element.getMsg().payload)), crb);
                 }
             }
         }

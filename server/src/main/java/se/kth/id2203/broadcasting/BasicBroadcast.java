@@ -35,9 +35,7 @@ public class BasicBroadcast extends ComponentDefinition {
         @Override
         public void handle(BEB_Broadcast broadcastMessage) {
 
-            LOG.info("BB: Broadcasting message from BasicBroadcast component");
             for (NetAddress address : topology) {
-                LOG.info("BB: Broadcasting to : " + address.toString());
                 if (!suspected.contains(address)) {
                     trigger(new Message(broadcastMessage.src, address, broadcastMessage.payload), net);
                 }
