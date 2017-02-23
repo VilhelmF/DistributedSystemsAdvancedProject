@@ -29,12 +29,12 @@ public class EPFD extends ComponentDefinition {
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    final long delta = 5; //cfg.getValue[Long]("epfd.simulation.delay");
+    final long delta = 1000; //cfg.getValue[Long]("epfd.simulation.delay");
     private NavigableSet<NetAddress> topology;
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 10; //TODO find proper period
+    private int period = 3000; //TODO find proper period
 
     //******* Handlers ******
     /*protected final Handler<Start> startHandler = new Handler<Start>() {
@@ -45,29 +45,35 @@ public class EPFD extends ComponentDefinition {
         }
     };*/
 
+    protected final Handler<StartMessage> startHandler = new Handler<StartMessage>() {
+        @Override
+        public void handle(StartMessage startMessage) {
+            topology = startMessage.topology;
+            startTimer(period);
+        }
+    };
+
     protected final Handler<TopologyMessage> topologyHandler = new Handler<TopologyMessage>() {
         @Override
         public void handle(TopologyMessage topologyMessage) {
-
-            LOG.info("Received new topology and starting failure detection");
             topology = topologyMessage.topology;
-            startTimer(period);
         }
     };
 
     protected final Handler<CheckTimeout> timeoutHandler = new Handler<CheckTimeout>() {
         @Override
         public void handle(CheckTimeout timeout) {
-            LOG.info("Performing check");
             if (!Sets.intersection(Sets.newHashSet(alive), suspcected).isEmpty()) {
                 period += delta;
             }
             seqnum++;
             for (NetAddress address : topology) {
                 if (!alive.contains(address) && !suspcected.contains(address)) {
+                    LOG.info("Suspecting " + address.toString());
                     suspcected.add(address);
                     trigger(new Suspect(address), epfd);
                 } else if (alive.contains(address) && suspcected.contains(address)) {
+                    LOG.info("Restoring " + address.toString());
                     suspcected.remove(address);
                     trigger(new Restore(address), epfd);
                 }
@@ -82,7 +88,6 @@ public class EPFD extends ComponentDefinition {
 
         @Override
         public void handle(HeartbeatRequest heartbeatRequest, Message context) {
-            LOG.info(self + " sent a heartbeatrequest to " + context.getSource());
             trigger(new Message(self, context.getSource(), new HeartbeatReply(heartbeatRequest.seq)), net);
         }
     };
@@ -91,23 +96,19 @@ public class EPFD extends ComponentDefinition {
 
         @Override
         public void handle(HeartbeatReply heartbeatReply, Message context) {
-            LOG.info(self + " received a heartbeatreply from " + context.getSource());
             alive.add(context.getSource());
         }
     };
 
 
     public void startTimer(int period) {
-        LOG.info("Starting period " + period);
-        //ScheduleTimeout scheduledTimeout = new ScheduleTimeout(period);
-        //scheduledTimeout.setTimeoutEvent(new CheckTimeout(scheduledTimeout));
-        ScheduleTimeout st = new ScheduleTimeout(period);
-        CheckTimeout scheduledTimeout = new CheckTimeout(st);
+        ScheduleTimeout scheduledTimeout = new ScheduleTimeout(period);
+        scheduledTimeout.setTimeoutEvent(new CheckTimeout(scheduledTimeout));
         trigger(scheduledTimeout, timer);
     }
 
     {
-        //subscribe(startHandler, control);
+        subscribe(startHandler, epfd);
         subscribe(timeoutHandler, timer);
         subscribe(heartbeatRequestHandler, net);
         subscribe(heartbeatReplyHandler, net);
