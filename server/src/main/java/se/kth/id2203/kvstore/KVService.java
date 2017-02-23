@@ -57,9 +57,6 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(GetOperation content, Message context) {
-
-            LOG.info("Received a GET message");
-
             pending.put(content.id, context.getSource());
             trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
         }
@@ -70,6 +67,7 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(AR_Read_Response readResponse) {
             NetAddress src = pending.get(readResponse.id);
+            pending.remove(readResponse.id);
             if (readResponse.value == null) {
                 trigger(new Message(self, src, new OpResponse(readResponse.id, null, Code.NOT_FOUND)), net);
             } else {
@@ -78,19 +76,10 @@ public class KVService extends ComponentDefinition {
         }
     };
 
-
-
-
-
     protected final ClassMatchedHandler<PutOperation, Message> putHandler = new ClassMatchedHandler<PutOperation, Message>() {
 
         @Override
         public void handle(PutOperation content, Message context) {
-
-            LOG.info("Received a PUT message");
-
-            LOG.info("First opid = " + content.id);
-
             pending.put(content.id, context.getSource());
             trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
         }
@@ -100,11 +89,8 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(AR_Write_Response writeResponse) {
-            LOG.info("RECEIVED AR_WRITE_RESPONSE YEEAAH");
-            LOG.info("opID = " + writeResponse.opId.toString());
             NetAddress src = pending.get(writeResponse.opId);
-            LOG.info("src = " + src.toString());
-
+            pending.remove(writeResponse.opId);
             trigger(new Message(self, src, new OpResponse(writeResponse.opId, null, Code.OK)), net);
         }
     };
@@ -114,7 +100,18 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(CASOperation content, Message context) {
             pending.put(content.id, context.getSource());
+            trigger(new AR_CAS_Request(Integer.parseInt(content.key), content.referenceValue, content.newValue, content.id), atomicRegister);
 
+        }
+    };
+
+    protected final Handler<AR_CAS_Response> casResponseHandler = new Handler<AR_CAS_Response>() {
+
+        @Override
+        public void handle(AR_CAS_Response casResponse) {
+            NetAddress src = pending.get(casResponse.opId);
+            pending.remove(casResponse.opId);
+            trigger(new Message(self, src, new OpResponse(casResponse.opId, null, casResponse.opStatus)), net);
         }
     };
 
@@ -124,6 +121,7 @@ public class KVService extends ComponentDefinition {
         subscribe(casHandler, net);
         subscribe(readResponseHandler, atomicRegister);
         subscribe(writeResponseHandler, atomicRegister);
+        subscribe(casResponseHandler, atomicRegister);
     }
 
 }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.broadcasting.*;
+import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
@@ -29,9 +30,13 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     private int acks = 0;
     private Object readVal = null;
     private Object writeVal = null;
+    private Object casReferenceVal = null;
+    private Object casNewVal = null;
+    private Code casCode = null;
     private int rid = 0;
     private HashMap<Address, ReadListValue> readlist = new HashMap<>();
     private boolean reading = false;
+    private boolean cas = false;
     private int N = config().getValue("id2203.project.replicationDegree", Integer.class);
 
     //******* Handlers ******
@@ -39,12 +44,25 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(AR_Read_Request readRequest) {
-            LOG.info("Received AR_READ_REQUEST inside RIWC");
             rid++;
             acks = 0;
             readlist.clear();
             reading = true;
             trigger(new BEB_Broadcast(self, new Read(self, rid, readRequest.key, readRequest.id)), beb);
+        }
+    };
+
+    protected final Handler<AR_CAS_Request> casRequestHandler = new Handler<AR_CAS_Request>() {
+
+        @Override
+        public void handle(AR_CAS_Request casRequest) {
+            rid++;
+            casReferenceVal = casRequest.referenceValue;
+            casNewVal = casRequest.newValue;
+            acks = 0;
+            readlist.clear();
+            cas = true;
+            trigger(new BEB_Broadcast(self, new Read(self, rid, casRequest.key, casRequest.opId)), beb);
         }
     };
 
@@ -64,7 +82,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Read read, Message context) {
-            LOG.info("RECEIVED READ inside RIWC");
             trigger(new Message(self, read.src, new Value(self, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
         }
     };
@@ -73,9 +90,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Write write, Message context) {
-
-            LOG.info("RECEIVED WRITE inside RIWC");
-
             if (isBigger(write.wr, write.ts, wr, timestamp)) {
                 timestamp= write.ts;
                 wr = write.wr;
@@ -85,13 +99,25 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         }
     };
 
+    protected final ClassMatchedHandler<CAS, Message> casHandler = new ClassMatchedHandler<CAS, Message>() {
+
+        @Override
+        public void handle(CAS cas, Message context) {
+            /*
+            if (isBigger(cas.wr, write.ts, wr, timestamp)) {
+                timestamp= write.ts;
+                wr = write.wr;
+                keyValueStore.put(write.key, write.writeVal);
+            }
+            trigger(new Message(self, write.src, new Ack(self, write.rid, write.opId)), net);
+            */
+        }
+    };
+
     protected final ClassMatchedHandler<Value, Message> valueHandler = new ClassMatchedHandler<Value, Message>() {
 
         @Override
         public void handle(Value value, Message context) {
-
-            LOG.info("RECEIVED VALUE inside RIWC");
-
             if (value.rid == rid) {
                 readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
                 if (readlist.size() > N / 2) {
@@ -106,7 +132,18 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     } else {
                         maxtimestamp++;
                         rr = getRank(self);
-                        broadcastval = writeVal;
+                        if (cas) {
+                            if (keyValueStore.get(value.key).equals(casReferenceVal)) {
+                                casCode = Code.OK;
+                                broadcastval = casNewVal;
+                            } else {
+                                casCode = Code.KEY_MISMATCH;
+                                broadcastval = writeVal;
+                            }
+
+                        } else {
+                            broadcastval = writeVal;
+                        }
                     }
                     trigger(new BEB_Broadcast(self, new Write(self, rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), beb);
                 }
@@ -118,18 +155,17 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Ack ack, Message context) {
-            LOG.info("RECEIVED ACK inside RIWC");
             if (ack.rid == rid) {
                 acks++;
                 if (acks > N / 2) {
                     acks = 0;
                     if (reading) {
                         reading = false;
-                        LOG.info("Triggering AR_READ_RESPONSE");
                         trigger(new AR_Read_Response(readVal, ack.opId), nnar);
+                    } else if (cas) {
+                        cas = false;
+                        trigger(new AR_CAS_Response(ack.opId, casCode), nnar);
                     } else {
-                        LOG.info("Triggering AR_WRITE_RESPONSE");
-                        LOG.info("ACK : " + ack.opId);
                         trigger(new AR_Write_Response(ack.opId), nnar);
                     }
                 }
@@ -152,6 +188,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     {
         subscribe(readRequestHandler, nnar);
         subscribe(writeRequestHandler, nnar);
+        subscribe(casRequestHandler, nnar);
         subscribe(readHandler, net);
         subscribe(writeHandler, net);
         subscribe(valueHandler, net);
