@@ -56,6 +56,7 @@ public class EPFD extends ComponentDefinition {
     protected final Handler<TopologyMessage> topologyHandler = new Handler<TopologyMessage>() {
         @Override
         public void handle(TopologyMessage topologyMessage) {
+            LOG.info("EPFD : Received new topology with size : " + topologyMessage.topology.size());
             topology = topologyMessage.topology;
         }
     };
@@ -66,9 +67,12 @@ public class EPFD extends ComponentDefinition {
             if (!Sets.intersection(Sets.newHashSet(alive), suspcected).isEmpty()) {
                 period += delta;
             }
+            LOG.info("Checking timeout");
+            LOG.info("Topology size : " + topology.size());
             seqnum++;
             LOG.info("My topology: " + topology.toString());
             for (NetAddress address : topology) {
+                LOG.info("Checking " + address.toString());
                 if (!alive.contains(address) && !suspcected.contains(address)) {
                     LOG.info("Suspecting " + address.toString());
                     suspcected.add(address);
