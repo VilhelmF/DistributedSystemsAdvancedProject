@@ -1,5 +1,6 @@
 package se.kth.id2203.failuredetector;
 
+import se.kth.id2203.broadcasting.TopologyMessage;
 import se.sics.kompics.PortType;
 
 /**
@@ -10,6 +11,5 @@ public class EventuallyPerfectFailureDetector extends PortType {
     {
         indication(Suspect.class);
         indication(Restore.class);
-
     }
 }
