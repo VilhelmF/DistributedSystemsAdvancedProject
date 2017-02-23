@@ -34,6 +34,7 @@ import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.TopologyMessage;
 import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
 import se.kth.id2203.failuredetector.Restore;
+import se.kth.id2203.failuredetector.StartMessage;
 import se.kth.id2203.failuredetector.Suspect;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -112,7 +113,7 @@ public class VSOverlayManager extends ComponentDefinition {
                 partition.remove(self);
                 LOG.info(self + ": The topolgy I'm sending - " + partition.toString());
                 trigger(new TopologyMessage(partition), beb);
-                trigger(new TopologyMessage(partition), epfd);
+                trigger(new StartMessage(partition), epfd);
                 LOG.info(partition.toString());
             } else {
                 LOG.error("Got invalid NodeAssignment type. Expected: LookupTable; Got: {}", event.assignment.getClass());

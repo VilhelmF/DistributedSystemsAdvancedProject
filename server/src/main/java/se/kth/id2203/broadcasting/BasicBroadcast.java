@@ -1,7 +1,6 @@
 package se.kth.id2203.broadcasting;
 
 
-import javafx.geometry.Pos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.networking.Message;
@@ -12,7 +11,6 @@ import se.sics.kompics.Negative;
 import se.sics.kompics.Positive;
 import se.sics.kompics.network.Network;
 
-import java.util.Collection;
 import java.util.NavigableSet;
 
 
