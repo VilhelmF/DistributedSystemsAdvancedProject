@@ -194,6 +194,4 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         subscribe(valueHandler, net);
         subscribe(ackHandler, net);
     }
-
-
 }

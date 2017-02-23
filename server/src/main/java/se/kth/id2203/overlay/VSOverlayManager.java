@@ -31,6 +31,7 @@ import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.bootstrapping.GetInitialAssignments;
 import se.kth.id2203.bootstrapping.InitialAssignments;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
+import se.kth.id2203.broadcasting.CausalOrderReliableBroadcast;
 import se.kth.id2203.broadcasting.TopologyMessage;
 import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
 import se.kth.id2203.failuredetector.Restore;
@@ -66,6 +67,7 @@ public class VSOverlayManager extends ComponentDefinition {
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
+    protected final Positive<CausalOrderReliableBroadcast> crb = requires(CausalOrderReliableBroadcast.class);
 
 
 
