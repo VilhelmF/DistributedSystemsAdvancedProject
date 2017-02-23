@@ -62,17 +62,6 @@ public class KVService extends ComponentDefinition {
 
             pending.put(content.id, context.getSource());
             trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
-
-            /*
-            LOG.info("Got GET operation {}!", content);
-
-            int hashedKey = MurmurHasher.keyToHash(content.key);
-            String value = keyValueStore.get(hashedKey);
-            if (value == null) {
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
-            }
-            trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
-            */
         }
     };
 
@@ -104,13 +93,6 @@ public class KVService extends ComponentDefinition {
 
             pending.put(content.id, context.getSource());
             trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
-
-            /*
-            LOG.info("Got PUT operation {}!", content);
-            int hashedKey = MurmurHasher.keyToHash(content.key);
-            keyValueStore.put(hashedKey, content.value);
-            trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.OK)), net);
-            */
         }
     };
 
@@ -131,19 +113,8 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(CASOperation content, Message context) {
-            /*
-            LOG.info("Got CAS operation {}!", content);
-            int hashedKey = MurmurHasher.keyToHash(content.key);
-            String value = keyValueStore.get(hashedKey);
-            if (value == null) {
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.NOT_FOUND)), net);
-            } else if (!value.equals(content.referenceValue)) {
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, "", Code.KEY_MISMATCH)), net);
-            } else if (value.equals(content.referenceValue)) {
-                keyValueStore.put(hashedKey, content.newValue);
-                trigger(new Message(self, context.getSource(), new OpResponse(content.id, value, Code.OK)), net);
-            }
-            */
+            pending.put(content.id, context.getSource());
+
         }
     };
 

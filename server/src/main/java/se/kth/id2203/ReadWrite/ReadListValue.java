@@ -1,8 +1,5 @@
 package se.kth.id2203.ReadWrite;
 
-/**
- * Created by sindrikaldal on 21/02/17.
- */
 public class ReadListValue implements Comparable {
     private int ts;
     private int wr;

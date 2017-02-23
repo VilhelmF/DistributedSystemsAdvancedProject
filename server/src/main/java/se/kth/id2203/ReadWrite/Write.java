@@ -7,9 +7,6 @@ import se.sics.kompics.network.Address;
 import java.io.Serializable;
 import java.util.UUID;
 
-/**
- * Created by sindrikaldal on 21/02/17.
- */
 public class Write implements KompicsEvent, Serializable {
 
     private static final long serialVersionUID = -5669973156467232337L;

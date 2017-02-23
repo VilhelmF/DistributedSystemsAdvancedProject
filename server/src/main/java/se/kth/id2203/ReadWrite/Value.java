@@ -6,9 +6,6 @@ import se.sics.kompics.network.Address;
 import java.io.Serializable;
 import java.util.UUID;
 
-/**
- * Created by sindrikaldal on 21/02/17.
- */
 public class Value implements KompicsEvent, Serializable {
 
 

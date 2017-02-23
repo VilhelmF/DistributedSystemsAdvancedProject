@@ -5,9 +5,6 @@ import se.sics.kompics.network.Address;
 
 import java.io.Serializable;
 
-/**
- * Created by sindrikaldal on 21/02/17.
- */
 public class PL_Deliver implements KompicsEvent, Serializable {
 
     public final Address src;

@@ -18,7 +18,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     //******* Ports ******
     Negative<AtomicRegister> nnar = provides(AtomicRegister.class);
     Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
-    Positive<PerfectLink> pLink = requires(PerfectLink.class);
     Positive<Network> net = requires(Network.class);
 
     //******* Fields ******
@@ -60,16 +59,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             trigger(new BEB_Broadcast(self, new Read(self, rid, writeRequest.key, writeRequest.opId)), beb);
         }
     };
-
-    /*
-    protected final Handler<Read> bebDeliverReadHandler = new Handler<Read>() {
-
-        @Override
-        public void handle(Read read) {
-            trigger(new PL_Send(read.src, new Value(read.src, read.rid, timestamp, wr, read.key, keyValueStore.get(read.key), read.opId)), pLink);
-        }
-    };
-    */
 
     protected final ClassMatchedHandler<Read, Message> readHandler = new ClassMatchedHandler<Read, Message>() {
 
@@ -148,27 +137,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         }
     };
 
-    /*
-    protected final Handler<Ack> ackHandler = new Handler<Ack>() {
-
-        @Override
-        public void handle(Ack ack) {
-            if (ack.rid == rid) {
-                acks++;
-                if (acks > N / 2) {
-                    acks = 0;
-                    if (reading) {
-                        reading = false;
-                        trigger(new AR_Read_Response(readVal, ack.opId), nnar);
-                    } else {
-                        trigger(new AR_Write_Response(ack.opId), nnar);
-                    }
-                }
-            }
-        }
-    };
-    */
-
     public boolean isBigger(int writeWR, int writeTS, int wr, int ts) {
         if (writeWR == wr) {
             return writeTS > ts;
@@ -188,7 +156,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         subscribe(writeHandler, net);
         subscribe(valueHandler, net);
         subscribe(ackHandler, net);
-        //subscribe(ackHandler, pLink);
     }
 
 
