@@ -18,7 +18,9 @@ public class EagerReliableBroadcast extends ComponentDefinition {
 
     //******* Ports ******
     protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
+    protected final Positive<Network> net = requires(Network.class);
     protected final Negative<ReliableBroadcast> rb = provides(ReliableBroadcast.class);
+
 
     //******* Fields ******
     private HashSet<KompicsEvent> delivered = new HashSet<>();
@@ -45,7 +47,7 @@ public class EagerReliableBroadcast extends ComponentDefinition {
 
     {
         subscribe(rbBroadcastHandler, rb);
-        subscribe(bebDeliverHandler, beb);
+        subscribe(bebDeliverHandler, net);
     }
 
 

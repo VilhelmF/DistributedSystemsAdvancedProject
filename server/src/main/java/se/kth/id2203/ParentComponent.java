@@ -6,8 +6,7 @@ import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.bootstrapping.BootstrapClient;
 import se.kth.id2203.bootstrapping.BootstrapServer;
 import se.kth.id2203.bootstrapping.Bootstrapping;
-import se.kth.id2203.broadcasting.BestEffortBroadcast;
-import se.kth.id2203.broadcasting.BasicBroadcast;
+import se.kth.id2203.broadcasting.*;
 import se.kth.id2203.failuredetector.EPFD;
 import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
 import se.kth.id2203.kvstore.KVService;
@@ -25,12 +24,16 @@ public class ParentComponent
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
+    protected final Positive<ReliableBroadcast> rb = requires(ReliableBroadcast.class);
+    protected final Positive<CausalOrderReliableBroadcast> crb = requires(CausalOrderReliableBroadcast.class);
     protected final Positive<AtomicRegister> atomicRegisterPos = requires(AtomicRegister.class);
     //******* Children ******
     protected final Component overlay = create(VSOverlayManager.class, Init.NONE);
     protected final Component riwc = create(ReadImposeWriteConsultMajority.class, Init.NONE);
     protected final Component kv = create(KVService.class, Init.NONE);
     protected final Component basicbroadcast = create(BasicBroadcast.class, Init.NONE);
+    protected final Component reliableBroadcast = create(EagerReliableBroadcast.class, Init.NONE);
+    protected final Component causalReliableBroadcast = create(WaitingCRB.class, Init.NONE);
     protected final Component epfd = create(EPFD.class, Init.NONE);
     protected final Component boot;
 
@@ -55,11 +58,16 @@ public class ParentComponent
         connect(atomicRegisterPos, kv.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
         //BB
         connect(basicbroadcast.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
-        connect(basicbroadcast.getPositive(BestEffortBroadcast.class), riwc.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+        connect(basicbroadcast.getPositive(BestEffortBroadcast.class), reliableBroadcast.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         connect(net, basicbroadcast.getNegative(Network.class), Channel.TWO_WAY);
+        //RB
+        connect(net, reliableBroadcast.getNegative(Network.class), Channel.TWO_WAY);
+        connect(reliableBroadcast.getPositive(ReliableBroadcast.class), causalReliableBroadcast.getNegative(ReliableBroadcast.class), Channel.TWO_WAY);
+        //CRB
+        connect(causalReliableBroadcast.getPositive(CausalOrderReliableBroadcast.class), riwc.getNegative(CausalOrderReliableBroadcast.class), Channel.TWO_WAY);
         //RIWC
         connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
-        connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
+        //connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
         //EPFD
         connect(epfd.getPositive(EventuallyPerfectFailureDetector.class), overlay.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
         connect(timer, epfd.getNegative(Timer.class), Channel.TWO_WAY);
