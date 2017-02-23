@@ -80,13 +80,8 @@ public class VSOverlayManager extends ComponentDefinition {
         @Override
         public void handle(GetInitialAssignments event) {
             LOG.info("Generating LookupTable...");
-            LookupTable lut = LookupTable.generate(event.nodes);
-            /*LookupTable lut = LookupTable.createEmpty();
-            int i = 0;
-            for (NetAddress node : event.nodes) {
-               lut.addNode(node, i);
-               i++;
-            }*/
+            //LookupTable lut = LookupTable.generate(event.nodes);
+            LookupTable lut = LookupTable.generatePartitionedTable(event.nodes, event.partitions, event.partitionSize);
             LOG.debug("Generated assignments:\n{}", lut);
             trigger(new InitialAssignments(lut), boot);
         }
@@ -126,6 +121,7 @@ public class VSOverlayManager extends ComponentDefinition {
         public void handle(RouteMsg content, Message context) {
             //int i_key = Integer.parseInt(content.key);
             Collection<NetAddress> partition = lut.get(content.key);
+            LOG.info("Received this partition: " + partition.toString());
             NetAddress target = J6.randomElement(partition);
             LOG.info("Broadcasting message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);

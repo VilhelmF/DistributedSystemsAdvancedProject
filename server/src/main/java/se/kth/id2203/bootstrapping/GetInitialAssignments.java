@@ -30,8 +30,12 @@ import se.sics.kompics.KompicsEvent;
 public class GetInitialAssignments implements KompicsEvent {
 
     public final ImmutableSet<NetAddress> nodes;
+    public final int partitions;
+    public final int partitionSize;
 
-    public GetInitialAssignments(final ImmutableSet<NetAddress> nodes) {
+    public GetInitialAssignments(final ImmutableSet<NetAddress> nodes, int partitions, int partitionSize) {
         this.nodes = nodes;
+        this.partitions = partitions;
+        this.partitionSize = partitionSize;
     }
 }

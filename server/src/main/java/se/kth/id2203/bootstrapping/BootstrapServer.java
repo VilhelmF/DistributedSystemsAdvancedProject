@@ -24,24 +24,19 @@
 package se.kth.id2203.bootstrapping;
 
 import com.google.common.collect.ImmutableSet;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.bootstrapping.BootstrapServer.State;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
-import se.sics.kompics.ClassMatchedHandler;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Negative;
-import se.sics.kompics.Positive;
-import se.sics.kompics.Start;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timer;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class BootstrapServer extends ComponentDefinition {
 
@@ -53,7 +48,10 @@ public class BootstrapServer extends ComponentDefinition {
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    final int bootThreshold = config().getValue("id2203.project.bootThreshold", Integer.class);
+    //final int bootThreshold = config().getValue("id2203.project.bootThreshold", Integer.class);
+    final int partitions = config().getValue("id2203.project.partitionCount", Integer.class);
+    final int partitionSize = config().getValue("id2203.project.replicationDegree", Integer.class);
+    final int bootThreshold = partitions * partitionSize;
     private State state = State.COLLECTING;
     private UUID timeoutId;
     private final Set<NetAddress> active = new HashSet<>();
@@ -134,7 +132,7 @@ public class BootstrapServer extends ComponentDefinition {
     private void bootUp() {
         LOG.info("Threshold reached. Generating assignments...");
         state = State.SEEDING;
-        trigger(new GetInitialAssignments(ImmutableSet.copyOf(active)), boot);
+        trigger(new GetInitialAssignments(ImmutableSet.copyOf(active), partitions, partitionSize), boot);
     }
 
     static enum State {
