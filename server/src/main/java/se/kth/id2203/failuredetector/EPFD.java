@@ -67,6 +67,7 @@ public class EPFD extends ComponentDefinition {
                 period += delta;
             }
             seqnum++;
+            LOG.info("My topology: " + topology.toString());
             for (NetAddress address : topology) {
                 if (!alive.contains(address) && !suspcected.contains(address)) {
                     LOG.info("Suspecting " + address.toString());
