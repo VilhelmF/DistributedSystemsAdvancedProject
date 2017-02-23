@@ -1,6 +1,7 @@
 package se.kth.id2203.failuredetector;
 
 import com.google.common.collect.Sets;
+import se.kth.id2203.broadcasting.TopologyMessage;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
@@ -12,7 +13,9 @@ import se.sics.kompics.timer.Timer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.NavigableSet;
+
+import static se.sics.kompics.network.netty.serialization.Serializers.LOG;
 
 /**
  * Created by sindrikaldal on 22/02/17.
@@ -26,17 +29,28 @@ public class EPFD extends ComponentDefinition {
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    final List<NetAddress> topology = new ArrayList<>(); //TODO initialize topology
-    final long delta = 0; //cfg.getValue[Long]("epfd.simulation.delay");
+    final long delta = 500; //cfg.getValue[Long]("epfd.simulation.delay");
+    private NavigableSet<NetAddress> topology;
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 10; //TODO find proper period
+    private int period = 1500; //TODO find proper period
 
     //******* Handlers ******
-    protected final Handler<Start> startHandler = new Handler<Start>() {
+    /*protected final Handler<Start> startHandler = new Handler<Start>() {
+
         @Override
         public void handle(Start e) {
+            startTimer(period);
+        }
+    };*/
+
+    protected final Handler<TopologyMessage> topologyHandler = new Handler<TopologyMessage>() {
+        @Override
+        public void handle(TopologyMessage topologyMessage) {
+
+            LOG.info("Received new topology and starting failure detection");
+            topology = topologyMessage.topology;
             startTimer(period);
         }
     };
@@ -44,6 +58,7 @@ public class EPFD extends ComponentDefinition {
     protected final Handler<CheckTimeout> timeoutHandler = new Handler<CheckTimeout>() {
         @Override
         public void handle(CheckTimeout timeout) {
+            LOG.info("Performing check");
             if (!Sets.intersection(Sets.newHashSet(alive), suspcected).isEmpty()) {
                 period += delta;
             }
@@ -69,6 +84,7 @@ public class EPFD extends ComponentDefinition {
 
         @Override
         public void handle(HeartbeatRequest heartbeatRequest, Message context) {
+            LOG.info(self + " sent a heartbeatrequest to " + context.getSource());
             trigger(new Message(self, context.getSource(), new HeartbeatReply(heartbeatRequest.seq)), net);
         }
     };
@@ -77,6 +93,7 @@ public class EPFD extends ComponentDefinition {
 
         @Override
         public void handle(HeartbeatReply heartbeatReply, Message context) {
+            LOG.info(self + " received a heartbeatreply from " + context.getSource());
             alive.add(context.getSource());
         }
     };
@@ -89,10 +106,11 @@ public class EPFD extends ComponentDefinition {
     }
 
     {
-        subscribe(startHandler, control);
+        //subscribe(startHandler, control);
         subscribe(timeoutHandler, timer);
         subscribe(heartbeatRequestHandler, net);
         subscribe(heartbeatReplyHandler, net);
+        subscribe(topologyHandler, epfd);
     }
 
 
