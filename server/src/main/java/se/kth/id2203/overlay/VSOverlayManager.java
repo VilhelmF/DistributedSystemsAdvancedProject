@@ -71,6 +71,7 @@ public class VSOverlayManager extends ComponentDefinition {
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private LookupTable lut = null;
+    private NavigableSet<NetAddress> partition = null;
 
     //******* Handlers ******
     protected final Handler<GetInitialAssignments> initialAssignmentHandler = new Handler<GetInitialAssignments>() {
@@ -99,7 +100,7 @@ public class VSOverlayManager extends ComponentDefinition {
                 LOG.info("I am: " + self);
                 LOG.info("My lookup table: ");
                 LOG.info(lut.toString());
-                NavigableSet<NetAddress> partition = lut.getPartition(self);
+                partition = lut.getPartition(self);
                 if(partition == null) {
                     try {
                         throw new Exception("Could not find self in lookup table. Initialization faulty.");
@@ -158,7 +159,8 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(Suspect event) {
-            //TODO handle suspect
+            partition.remove(event.process);
+            trigger(new TopologyMessage(partition), beb);
         }
     };
 
@@ -166,7 +168,8 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(Restore event) {
-            //TODO handle restore
+            partition.add(event.process);
+            trigger(new TopologyMessage(partition), beb);
         }
     };
 
