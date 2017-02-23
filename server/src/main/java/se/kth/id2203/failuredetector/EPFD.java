@@ -29,12 +29,12 @@ public class EPFD extends ComponentDefinition {
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    final long delta = 500; //cfg.getValue[Long]("epfd.simulation.delay");
+    final long delta = 5; //cfg.getValue[Long]("epfd.simulation.delay");
     private NavigableSet<NetAddress> topology;
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 1500; //TODO find proper period
+    private int period = 10; //TODO find proper period
 
     //******* Handlers ******
     /*protected final Handler<Start> startHandler = new Handler<Start>() {
@@ -98,8 +98,11 @@ public class EPFD extends ComponentDefinition {
 
 
     public void startTimer(int period) {
-        ScheduleTimeout scheduledTimeout = new ScheduleTimeout(period);
-        scheduledTimeout.setTimeoutEvent(new CheckTimeout(scheduledTimeout));
+        LOG.info("Starting period " + period);
+        //ScheduleTimeout scheduledTimeout = new ScheduleTimeout(period);
+        //scheduledTimeout.setTimeoutEvent(new CheckTimeout(scheduledTimeout));
+        ScheduleTimeout st = new ScheduleTimeout(period);
+        CheckTimeout scheduledTimeout = new CheckTimeout(st);
         trigger(scheduledTimeout, timer);
     }
 
