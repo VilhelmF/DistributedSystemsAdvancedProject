@@ -34,7 +34,7 @@ public class EPFD extends ComponentDefinition {
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 3000; //TODO find proper period
+    private int period = 10000; //TODO find proper period
 
     //******* Handlers ******
     /*protected final Handler<Start> startHandler = new Handler<Start>() {
