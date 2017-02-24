@@ -146,6 +146,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     acks = 0;
                     if (reading) {
                         reading = false;
+                        LOG.info("Finsihed reading and returning response");
                         trigger(new AR_Read_Response(readVal, ack.opId), nnar);
                     } else if (cas) {
                         cas = false;

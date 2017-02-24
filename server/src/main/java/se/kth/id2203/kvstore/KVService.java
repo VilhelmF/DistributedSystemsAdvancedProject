@@ -72,8 +72,10 @@ public class KVService extends ComponentDefinition {
             NetAddress src = pending.get(readResponse.id);
             pending.remove(readResponse.id);
             if (readResponse.value == null) {
+                LOG.info("Sending NOT FOUND back");
                 trigger(new Message(self, src, new OpResponse(readResponse.id, null, Code.NOT_FOUND)), net);
             } else {
+                LOG.info("Sending OK back");
                 trigger(new Message(self, src, new OpResponse(readResponse.id, (String) readResponse.value, Code.OK)), net);
             }
         }

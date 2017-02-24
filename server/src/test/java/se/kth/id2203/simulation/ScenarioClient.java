@@ -23,9 +23,6 @@
  */
 package se.kth.id2203.simulation;
 
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.kvstore.GetOperation;
@@ -33,13 +30,13 @@ import se.kth.id2203.kvstore.OpResponse;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.RouteMsg;
-import se.sics.kompics.ClassMatchedHandler;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Handler;
-import se.sics.kompics.Positive;
-import se.sics.kompics.Start;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
+
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  *
@@ -63,12 +60,12 @@ public class ScenarioClient extends ComponentDefinition {
         public void handle(Start event) {
             int messages = res.get("messages", Integer.class);
             for (int i = 0; i < messages; i++) {
-                GetOperation op = new GetOperation("test" + i);
+                GetOperation op = new GetOperation("" + i);
+                LOG.info("OP id: " + op.id);
                 RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
                 trigger(new Message(self, server, rm), net);
                 pending.put(op.id, op.key);
                 LOG.info("Sending {}", op);
-                res.put(op.key, "SENT");
             }
         }
     };
@@ -79,6 +76,7 @@ public class ScenarioClient extends ComponentDefinition {
             LOG.debug("Got OpResponse: {}", content);
             String key = pending.remove(content.id);
             if (key != null) {
+                LOG.info("Putting to res: " + content.status.toString());
                 res.put(key, content.status.toString());
             } else {
                 LOG.warn("ID {} was not pending! Ignoring response.", content.id);

@@ -25,6 +25,8 @@ package se.kth.id2203.simulation;
 
 import junit.framework.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.run.LauncherComp;
 
@@ -36,6 +38,7 @@ public class OpsTest {
     
     private static final int NUM_MESSAGES = 10;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
+    final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
     @Test
     public void simpleOpsTest() {
@@ -45,7 +48,8 @@ public class OpsTest {
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
-            Assert.assertEquals("NOT_IMPLEMENTED", res.get("test"+i, String.class));
+            LOG.info(res.get(""+i, String.class));
+            Assert.assertEquals("NOT_FOUND", res.get("" + i, String.class));
             // of course the correct response should be SUCCESS not NOT_IMPLEMENTED, but like this the test passes
         }
     }

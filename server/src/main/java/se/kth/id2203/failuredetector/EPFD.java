@@ -1,6 +1,8 @@
 package se.kth.id2203.failuredetector;
 
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.kth.id2203.broadcasting.TopologyMessage;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -15,12 +17,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableSet;
 
-import static se.sics.kompics.network.netty.serialization.Serializers.LOG;
-
 /**
  * Created by sindrikaldal on 22/02/17.
  */
 public class EPFD extends ComponentDefinition {
+
+    final static Logger LOG = LoggerFactory.getLogger(EPFD.class);
 
     //******* Ports ******
     protected final Positive<Timer> timer = requires(Timer.class);
@@ -34,7 +36,7 @@ public class EPFD extends ComponentDefinition {
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
     private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 10000; //TODO find proper period
+    private int period = 2000; //TODO find proper period
 
     //******* Handlers ******
     /*protected final Handler<Start> startHandler = new Handler<Start>() {

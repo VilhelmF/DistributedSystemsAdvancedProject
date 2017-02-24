@@ -23,10 +23,6 @@
  */
 package se.kth.id2203.simulation;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
 import se.kth.id2203.ParentComponent;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.Init;
@@ -35,6 +31,11 @@ import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.adaptor.Operation1;
 import se.sics.kompics.simulator.adaptor.distributions.extra.BasicIntSequentialDistribution;
 import se.sics.kompics.simulator.events.system.StartNodeEvent;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -157,7 +158,7 @@ public abstract class ScenarioGen {
                     }
                 };
                 startCluster.start();
-                startClients.startAfterTerminationOf(10000, startCluster);
+                startClients.startAfterTerminationOf(30000, startCluster);
                 terminateAfterTerminationOf(100000, startClients);
             }
         };
