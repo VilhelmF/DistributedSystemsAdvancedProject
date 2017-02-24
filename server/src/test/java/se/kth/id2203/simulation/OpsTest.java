@@ -36,7 +36,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
     
-    private static final int NUM_MESSAGES = 10;
+    private static final int NUM_MESSAGES = 1000;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
@@ -44,7 +44,7 @@ public class OpsTest {
     public void simpleOpsTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {

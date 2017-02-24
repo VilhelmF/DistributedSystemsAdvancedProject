@@ -59,8 +59,8 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(GetOperation content, Message context) {
-            pending.put(content.id, context.getSource());
             LOG.info("Received a get request");
+            pending.put(content.id, context.getSource());
             trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
         }
     };
