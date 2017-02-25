@@ -40,6 +40,7 @@ public class OpsTest {
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
+
     @Test
     public void simpleGetTest() {
         long seed = 123;
@@ -50,7 +51,6 @@ public class OpsTest {
         for (int i = 0; i < NUM_MESSAGES; i++) {
             LOG.info(res.get(""+i, String.class));
             Assert.assertEquals("NOT_FOUND", res.get("" + i, String.class));
-            // of course the correct response should be SUCCESS not NOT_IMPLEMENTED, but like this the test passes
         }
     }
 
@@ -62,16 +62,25 @@ public class OpsTest {
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
-            LOG.info("WAT DA MAN");
             LOG.info(res.get(""+i, String.class));
             Assert.assertEquals("OK", res.get("" + i, String.class));
-            // of course the correct response should be SUCCESS not NOT_IMPLEMENTED, but like this the test passes
         }
-        for (int i = NUM_MESSAGES; i < 2 * NUM_MESSAGES - 2; i++) {
-            LOG.info(res.get(""+ NUM_MESSAGES + i, String.class));
+        for (int i = NUM_MESSAGES; i < 20; i++) {
+            LOG.info(res.get(Integer.toString(i), String.class));
             int value = i - NUM_MESSAGES;
             Assert.assertEquals("Value: " + value, res.get("" + i, String.class));
         }
+    }
+
+    @Test
+    public void simpleBroadcastTest() {
+        long seed = 123;
+        SimulationScenario.setSeed(seed);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
+    }
+
+    @Test void simpleFailureDetector() {
+
     }
 
 

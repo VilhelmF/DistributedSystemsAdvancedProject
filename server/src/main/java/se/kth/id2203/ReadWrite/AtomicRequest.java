@@ -10,6 +10,8 @@ import java.util.HashMap;
 public class AtomicRequest {
 
     public int rid;
+    public int wr;
+    public int ts;
     public int acks;
     public HashMap<Address, ReadListValue> readlist;
     public boolean reading;
@@ -17,8 +19,10 @@ public class AtomicRequest {
     public Object writeVal;
 
 
-    public AtomicRequest(int rid, int acks, HashMap<Address, ReadListValue> readlist, boolean reading, Object readVal, Object writeVal) {
+    public AtomicRequest(int rid, int wr, int ts, int acks, HashMap<Address, ReadListValue> readlist, boolean reading, Object readVal, Object writeVal) {
         this.rid = rid;
+        this.wr = wr;
+        this.ts = ts;
         this.acks = acks;
         this.readlist = readlist;
         this.reading = reading;
