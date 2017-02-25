@@ -36,7 +36,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
     
-    private static final int NUM_MESSAGES = 100;
+    private static final int NUM_MESSAGES = 10;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
@@ -62,6 +62,7 @@ public class OpsTest {
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
+            LOG.info("WAT DA MAN");
             LOG.info(res.get(""+i, String.class));
             Assert.assertEquals("OK", res.get("" + i, String.class));
             // of course the correct response should be SUCCESS not NOT_IMPLEMENTED, but like this the test passes

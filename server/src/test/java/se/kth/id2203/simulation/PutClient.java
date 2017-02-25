@@ -19,7 +19,7 @@ import java.util.*;
  */
 public class PutClient extends ComponentDefinition {
 
-    final static Logger LOG = LoggerFactory.getLogger(ScenarioClient.class);
+    final static Logger LOG = LoggerFactory.getLogger(PutClient.class);
     //******* Ports ******
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Timer> timer = requires(Timer.class);
@@ -48,6 +48,7 @@ public class PutClient extends ComponentDefinition {
             }
 
 
+            /*
             for (int i = 0; i < messages; i++) {
                 GetOperation op = new GetOperation("" + i);
                 LOG.info("OP id: " + op.id);
@@ -56,7 +57,7 @@ public class PutClient extends ComponentDefinition {
                 pending.put(op.id, op.key);
                 getID.add(op.id);
                 LOG.info("Sending {}", op);
-            }
+            } */
         }
     };
     protected final ClassMatchedHandler<OpResponse, Message> responseHandler = new ClassMatchedHandler<OpResponse, Message>() {
@@ -66,12 +67,21 @@ public class PutClient extends ComponentDefinition {
             int messages = res.get("messages", Integer.class);
             LOG.debug("Got OpResponse: {}", content);
             String key = pending.remove(content.id);
-            if (key != null && getID.contains(content.id)) {
+            if (key != null && putID.contains(content.id)) {
                 LOG.info("Putting to res: " + content.status.toString());
                 res.put(key, content.status.toString());
-            }  else if (key != null && putID.contains(content.id)) {
-                LOG.info("Putting to res: " + content.response);
-                res.put(key + messages, content.response);
+                GetOperation op = new GetOperation(key);
+                LOG.info("GetOP id: " + op.id);
+                RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
+                trigger(new Message(self, server, rm), net);
+                pending.put(op.id, op.key);
+                getID.add(op.id);
+                LOG.info("Sending {}", op);
+
+            }  else if (key != null && getID.contains(content.id)) {
+                //LOG.info("Putting to res: " + content.response);
+                String resKey = key + messages;
+                res.put(resKey, content.response);
             } else {
                 LOG.warn("ID {} was not pending! Ignoring response.", content.id);
             }
