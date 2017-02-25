@@ -12,7 +12,7 @@ public class Ack implements KompicsEvent, Serializable {
 
     public final Address src;
     public final int rid;
-    public final int key;
+    public  int key;
     public final UUID opId;
 
     public Ack(Address src, int rid, int key, UUID opId) {
@@ -20,5 +20,6 @@ public class Ack implements KompicsEvent, Serializable {
         this.rid = rid;
         this.key = key;
         this.opId = opId;
+        this.key = key;
     }
 }

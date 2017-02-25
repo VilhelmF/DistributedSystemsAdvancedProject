@@ -33,7 +33,8 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     private Object casReferenceVal = null;
     private Object casNewVal = null;
     private Code casCode = null;
-    //private int rid = 0;
+    private HashMap<Integer, AtomicRequest> requests = new HashMap<>();
+    private int rid = 0;
     //private HashMap<Address, ReadListValue> readlist = new HashMap<>();
     //private boolean reading = false;
     private HashMap<Integer, Integer> rids = new HashMap<>();
@@ -54,21 +55,18 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         @Override
         public void handle(AR_Read_Request readRequest) {
             LOG.info("Starting new read req.");
-            acks.put(readRequest.key, 0);
-            increaseRid(readRequest.key);
-            readlists.put(readRequest.key, new HashMap<Address, ReadListValue>());
-            reading.put(readRequest.key, true);
-            if (TSs.get(readRequest.key) == null) {
-                TSs.put(readRequest.key, 0);
-                WRs.put(readRequest.key, 0);
-            }
-            trigger(new BEB_Broadcast(self, new Read(self, rids.get(readRequest.key), readRequest.key, readRequest.id)), beb);
+            rid++;
+            Object readVal = null;
+            Object writeVal = null;
+            AtomicRequest ar = new AtomicRequest(readRequest.key, rid, 0, new HashMap<Address, ReadListValue>(), true, readVal, writeVal, 0, 0);
+            requests.put(ar.key, ar);
+
+            trigger(new BEB_Broadcast(self, new Read(self, ar.rid, readRequest.key, readRequest.id)), beb);
         }
     };
 
     /*
     protected final Handler<AR_CAS_Request> casRequestHandler = new Handler<AR_CAS_Request>() {
-
         @Override
         public void handle(AR_CAS_Request casRequest) {
             rid++;
@@ -87,16 +85,11 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         @Override
         public void handle(AR_Write_Request writeRequest) {
             // Hvað ef tvö request koma inn og rid hækkar um 2 áður en AtomicRequest er búið til?
+            rid++;
             increaseRid(writeRequest.key);
-            acks.put(writeRequest.key, 0);
-            writeVals.put(writeRequest.key, writeRequest.value);
-            readlists.put(writeRequest.key, new HashMap<Address, ReadListValue>());
-            reading.put(writeRequest.key, false);
-            if (TSs.get(writeRequest.key) == null) {
-                TSs.put(writeRequest.key, 0);
-                WRs.put(writeRequest.key, 0);
-            }
-            trigger(new BEB_Broadcast(self, new Read(self, rids.get(writeRequest.key), writeRequest.key, writeRequest.opId)), beb);
+            AtomicRequest ar = new AtomicRequest(writeRequest.key, rid, 0, new HashMap<Address, ReadListValue>(), false, null, writeRequest.value, 0, 0);
+            requests.put(ar.key, ar);
+            trigger(new BEB_Broadcast(self, new Read(self, ar.rid, writeRequest.key, writeRequest.opId)), beb);
         }
     };
 
@@ -104,11 +97,14 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Read read, Message context) {
-            if (WRs.get(read.key) == null) {
-                TSs.put(read.key, 0);
-                WRs.put(read.key, 0);
+            AtomicRequest ar = requests.get(read.key);
+            int ts = 0;
+            int wr = 0;
+            if (ar != null) {
+                ts = ar.timestamp;
+                wr = ar.wr;
             }
-            trigger(new Message(self, read.src, new Value(self, read.rid, TSs.get(read.key), WRs.get(read.key), read.key, keyValueStore.get(read.key), read.opId)), net);
+            trigger(new Message(self, read.src, new Value(self, read.rid, ts, wr, read.key, keyValueStore.get(read.key), read.opId)), net);
         }
     };
 
@@ -116,9 +112,19 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Write write, Message context) {
-            if (isBigger(write.wr, write.ts, WRs.get(write.key), TSs.get(write.key))) {
-                TSs.put(write.key, write.ts);
-                WRs.put(write.key, write.wr);
+            AtomicRequest ar = requests.get(write.key);
+            int ts = 0;
+            int wr = 0;
+            if (ar != null) {
+                ts = ar.timestamp;
+                wr = ar.wr;
+            } else {
+                ar = new AtomicRequest(write.key, rid, 0, new HashMap<Address, ReadListValue>(), false, null, null, ts, wr);
+            }
+            if (isBigger(write.wr, write.ts, wr, ts)) {
+                ar.timestamp = write.ts;
+                ar.wr = write.wr;
+                requests.put(ar.key, ar);
                 keyValueStore.put(write.key, write.writeVal);
             }
             trigger(new Message(self, write.src, new Ack(self, write.rid, write.key, write.opId)), net);
@@ -129,19 +135,18 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Value value, Message context) {
-            if(value.rid == rids.get(value.key)) {
-                HashMap<Address, ReadListValue> readlist = readlists.get(value.key);
-                readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
-                readlists.put(value.key, readlist);
-                if (readlist.size() > N / 2) {
-                    ReadListValue readListValue = Collections.max(readlist.values());
-                    readlist.clear();
-                    readVals.put(value.key, readListValue.getValue());
+            AtomicRequest ar = requests.get(value.key);
+            if(value.rid == ar.rid) {
+                ar.readlist.put(value.src, new ReadListValue(value.ts, value.wr, value.value));
+                if (ar.readlist.size() > N / 2) {
+                    ReadListValue readListValue = Collections.max(ar.readlist.values());
+                    ar.readlist.clear();
+                    ar.readVal = readListValue.getValue();
                     Object broadcastval;
                     int maxtimestamp= readListValue.getTs();
                     int rr = readListValue.getWr();
-                    if (reading.get(value.key)) {
-                        broadcastval = readVals.get(value.key);
+                    if (ar.reading) {
+                        broadcastval = ar.readVal;
                     } else {
                         maxtimestamp++;
                         rr = getRank(self);
@@ -155,10 +160,11 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                             }
 
                         } else {
-                            broadcastval = writeVals.get(value.key);
+                            broadcastval = ar.writeVal;
                         }
                     }
-                    trigger(new BEB_Broadcast(self, new Write(self, rids.get(value.key), maxtimestamp, rr, value.key, broadcastval, value.opId)), beb);
+                    requests.put(ar.key, ar);
+                    trigger(new BEB_Broadcast(self, new Write(self, ar.rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), beb);
                 }
             }
         }
@@ -168,21 +174,25 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Ack ack, Message context) {
-            if(ack.rid == rids.get(ack.key)) {
-                increaseAck(ack.key);
-                if (acks.get(ack.key) > N / 2) {
+            AtomicRequest ar = requests.get(ack.key);
+            if(ack.rid == ar.rid) {
+                ar.acks = ar.acks + 1;
+                if (ar.acks > N / 2) {
                     acks.put(ack.key, 0);
-                    if (reading.get(ack.key)) {
-                        reading.put(ack.key, false);
-                        LOG.info("Finsihed reading and returning response for RID: " + rids.get(ack.key));
-                        trigger(new AR_Read_Response(readVals.get(ack.key), ack.opId), nnar);
+                    ar.acks = 0;
+                    if (ar.reading) {
+                        ar.reading = false;
+                        //LOG.info("Finsihed reading and returning response for RID: " + rids.get(ack.key));
+                        trigger(new AR_Read_Response(ar.readVal, ack.opId), nnar);
                         //requests.remove(request.rid);
+                        requests.put(ar.key, ar);
                     } else if (cas) {
                         cas = false;
                         trigger(new AR_CAS_Response(ack.opId, casCode), nnar);
                     } else {
                         LOG.info("Apparently I'm writing...");
                         trigger(new AR_Write_Response(ack.opId), nnar);
+                        requests.put(ar.key, ar);
                     }
                 }
             }
