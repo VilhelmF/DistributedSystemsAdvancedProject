@@ -117,8 +117,8 @@ public abstract class ScenarioGen {
 
                 @Override
                 public Class getComponentDefinition() {
-                    return BroadCastClient.class;
-                    //return PutClient.class;
+                    //return BroadCastClient.class;
+                    return PutClient.class;
                     //return ScenarioClient.class;
                 }
 

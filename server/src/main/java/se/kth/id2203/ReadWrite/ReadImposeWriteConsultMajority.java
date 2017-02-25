@@ -24,27 +24,11 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     //******* Fields ******
     final static Logger LOG = LoggerFactory.getLogger(ReadImposeWriteConsultMajority.class);
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    //private int timestamp = 0;
-    //private int wr = 0;
     private final HashMap<Integer, Object> keyValueStore = new HashMap<>();
-    //private int acks = 0;
-    //private Object readVal = null;
-    //private Object writeVal = null;
     private Object casReferenceVal = null;
     private Object casNewVal = null;
     private Code casCode = null;
     private HashMap<Integer, AtomicRequest> requests = new HashMap<>();
-    private int rid = 0;
-    //private HashMap<Address, ReadListValue> readlist = new HashMap<>();
-    //private boolean reading = false;
-    private HashMap<Integer, Integer> rids = new HashMap<>();
-    private HashMap<Integer, Integer> acks = new HashMap<>();
-    private HashMap<Integer, Boolean> reading = new HashMap<>();
-    private HashMap<Integer, Object> writeVals = new HashMap<>();
-    private HashMap<Integer, Object> readVals = new HashMap<>();
-    private HashMap<Integer, Integer> TSs = new HashMap<>();
-    private HashMap<Integer, Integer> WRs = new HashMap<>();
-    private HashMap<Integer, HashMap<Address, ReadListValue>> readlists = new HashMap<>();
 
     private boolean cas = false;
     private int N = config().getValue("id2203.project.replicationDegree", Integer.class);
@@ -55,7 +39,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         @Override
         public void handle(AR_Read_Request readRequest) {
             LOG.info("Starting new read req.");
-            rid++;
+            int rid = increaseRid(readRequest.key);
             Object readVal = null;
             Object writeVal = null;
             AtomicRequest ar = new AtomicRequest(readRequest.key, rid, 0, new HashMap<Address, ReadListValue>(), true, readVal, writeVal, 0, 0);
@@ -85,8 +69,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         @Override
         public void handle(AR_Write_Request writeRequest) {
             // Hvað ef tvö request koma inn og rid hækkar um 2 áður en AtomicRequest er búið til?
-            rid++;
-            increaseRid(writeRequest.key);
+            int rid = increaseRid(writeRequest.key);
             AtomicRequest ar = new AtomicRequest(writeRequest.key, rid, 0, new HashMap<Address, ReadListValue>(), false, null, writeRequest.value, 0, 0);
             requests.put(ar.key, ar);
             trigger(new BEB_Broadcast(self, new Read(self, ar.rid, writeRequest.key, writeRequest.opId)), beb);
@@ -119,7 +102,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                 ts = ar.timestamp;
                 wr = ar.wr;
             } else {
-                ar = new AtomicRequest(write.key, rid, 0, new HashMap<Address, ReadListValue>(), false, null, null, ts, wr);
+                ar = new AtomicRequest(write.key, write.rid, 0, new HashMap<Address, ReadListValue>(), false, null, null, ts, wr);
             }
             if (isBigger(write.wr, write.ts, wr, ts)) {
                 ar.timestamp = write.ts;
@@ -156,7 +139,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                                 broadcastval = casNewVal;
                             } else {
                                 casCode = Code.KEY_MISMATCH;
-                                broadcastval = writeVals.get(value.key);
+                                broadcastval = null;
                             }
 
                         } else {
@@ -178,7 +161,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             if(ack.rid == ar.rid) {
                 ar.acks = ar.acks + 1;
                 if (ar.acks > N / 2) {
-                    acks.put(ack.key, 0);
                     ar.acks = 0;
                     if (ar.reading) {
                         ar.reading = false;
@@ -199,24 +181,26 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         }
     };
 
-    public void increaseRid(int key) {
-        Object rid = rids.get(key);
+    public int increaseRid(int key) {
+        AtomicRequest rid = requests.get(key);
 
         if (rid == null) {
-            rids.put(key, 1);
+            return 1;
         } else {
-            rids.put(key, ((Integer) rid) + 1);
+            return rid.rid + 1;
         }
     }
 
     public void increaseAck(int key) {
-        Object ack = acks.get(key);
+        /*
+        bject ack = acks.get(key);
 
         if (ack == null) {
             acks.put(key, 1);
         } else {
             acks.put(key, ((Integer) ack) + 1);
         }
+        */
     }
 
     public boolean isBigger(int writeWR, int writeTS, int wr, int ts) {
