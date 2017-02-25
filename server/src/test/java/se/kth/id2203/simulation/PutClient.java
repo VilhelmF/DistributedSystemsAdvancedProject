@@ -2,6 +2,7 @@ package se.kth.id2203.simulation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.kvstore.GetOperation;
 import se.kth.id2203.kvstore.OpResponse;
 import se.kth.id2203.kvstore.PutOperation;
 import se.kth.id2203.networking.Message;
@@ -72,14 +73,13 @@ public class PutClient extends ComponentDefinition {
                 res.put(key, content.status.toString());
                 LOG.info("Key was:  " + key);
                 putResponse++;
-                /*
                 GetOperation op = new GetOperation(key);
                 LOG.info("GetOP id: " + op.id);
                 RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
                 trigger(new Message(self, server, rm), net);
                 pending.put(op.id, op.key);
                 getID.add(op.id);
-                LOG.info("Sending {}", op);*/
+                LOG.info("Sending {}", op);
             }  else if (key != null && getID.contains(content.id)) {
                 //LOG.info("Putting to res: " + content.response);
                 LOG.info("Got the get response: " + key + " " +  content.id + " " + content.response);
