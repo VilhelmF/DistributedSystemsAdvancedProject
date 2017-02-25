@@ -13,10 +13,12 @@ public class Ack implements KompicsEvent, Serializable {
     public final Address src;
     public final int rid;
     public final UUID opId;
+    public final int key;
 
-    public Ack(Address src, int rid, UUID opId) {
+    public Ack(Address src, int rid, int key, UUID opId) {
         this.src = src;
         this.rid = rid;
         this.opId = opId;
+        this.key = key;
     }
 }
