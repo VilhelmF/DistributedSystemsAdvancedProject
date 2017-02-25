@@ -47,7 +47,6 @@ public class PutClient extends ComponentDefinition {
                 LOG.info("Sending {}", op);
             }
 
-
             /*
             for (int i = 0; i < messages; i++) {
                 GetOperation op = new GetOperation("" + i);

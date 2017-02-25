@@ -11,5 +11,6 @@ public class BestEffortBroadcast extends PortType {
         request(BEB_Broadcast.class);
         request(Suspect.class);
         request(Restore.class);
+        indication(BroadcastTest.class);
     }
 }

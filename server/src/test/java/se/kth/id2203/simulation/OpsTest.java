@@ -78,11 +78,14 @@ public class OpsTest {
         long seed = 123;
         SimulationScenario.setSeed(seed);
         SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
+        simpleBootScenario.simulate(LauncherComp.class);
+        Assert.assertEquals("2", res.get("broadcast", String.class));
     }
 
-    @Test void simpleFailureDetector() {
-
+    @Test
+    public void simpleFailureDetector() {
+        long seed = 123;
+        SimulationScenario.setSeed(seed);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
     }
-
-
 }

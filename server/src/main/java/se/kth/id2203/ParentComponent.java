@@ -8,6 +8,7 @@ import se.kth.id2203.bootstrapping.BootstrapServer;
 import se.kth.id2203.bootstrapping.Bootstrapping;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.BasicBroadcast;
+import se.kth.id2203.broadcasting.TestBroadcast;
 import se.kth.id2203.failuredetector.EPFD;
 import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
 import se.kth.id2203.kvstore.KVService;
@@ -31,6 +32,7 @@ public class ParentComponent
     protected final Component riwc = create(ReadImposeWriteConsultMajority.class, Init.NONE);
     protected final Component kv = create(KVService.class, Init.NONE);
     protected final Component basicbroadcast = create(BasicBroadcast.class, Init.NONE);
+    protected final Component testBroadcast = create(TestBroadcast.class, Init.NONE);
     protected final Component epfd = create(EPFD.class, Init.NONE);
     protected final Component boot;
 
@@ -64,5 +66,7 @@ public class ParentComponent
         connect(epfd.getPositive(EventuallyPerfectFailureDetector.class), overlay.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
         connect(timer, epfd.getNegative(Timer.class), Channel.TWO_WAY);
         connect(net, epfd.getNegative(Network.class), Channel.TWO_WAY);
+        //Test
+        connect(basicbroadcast.getPositive(BestEffortBroadcast.class), testBroadcast.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
     }
 }

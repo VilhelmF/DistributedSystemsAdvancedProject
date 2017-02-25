@@ -34,7 +34,7 @@ public class BasicBroadcast extends ComponentDefinition {
 
         @Override
         public void handle(BEB_Broadcast broadcastMessage) {
-
+            LOG.info("Received BEB_Broadcast");
             for (NetAddress address : topology) {
                 if (!suspected.contains(address)) {
                     trigger(new Message(broadcastMessage.src, address, broadcastMessage.payload), net);
