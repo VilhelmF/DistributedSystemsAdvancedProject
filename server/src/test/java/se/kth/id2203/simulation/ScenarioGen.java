@@ -117,7 +117,8 @@ public abstract class ScenarioGen {
 
                 @Override
                 public Class getComponentDefinition() {
-                    return ScenarioClient.class;
+                    return PutClient.class;
+                    //return ScenarioClient.class;
                 }
 
                 @Override
