@@ -68,6 +68,7 @@ public class OpsTest {
         for (int i = NUM_MESSAGES; i < 20; i++) {
             LOG.info(res.get(Integer.toString(i), String.class));
             int value = i - NUM_MESSAGES;
+            LOG.info("Key to get:" + i + " expected value: " + value);
             Assert.assertEquals("Value: " + value, res.get("" + i, String.class));
         }
     }

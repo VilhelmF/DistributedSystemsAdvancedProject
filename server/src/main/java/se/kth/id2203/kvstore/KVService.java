@@ -85,6 +85,7 @@ public class KVService extends ComponentDefinition {
 
         @Override
         public void handle(PutOperation content, Message context) {
+            LOG.info("Got a put request: " + content.key + " " + " " + content.value);
             pending.put(content.id, context.getSource());
             trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
         }
@@ -96,6 +97,7 @@ public class KVService extends ComponentDefinition {
         public void handle(AR_Write_Response writeResponse) {
             NetAddress src = pending.get(writeResponse.opId);
             pending.remove(writeResponse.opId);
+            LOG.info("Returning OK for the put!");
             trigger(new Message(self, src, new OpResponse(writeResponse.opId, null, Code.OK)), net);
         }
     };

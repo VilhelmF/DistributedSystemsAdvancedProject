@@ -27,5 +27,5 @@ public class BroadCastClient extends ComponentDefinition {
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     private final Map<UUID, String> pending = new TreeMap<>();
 
-    
+
 }
