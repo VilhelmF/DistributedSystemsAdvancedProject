@@ -9,9 +9,9 @@ import java.util.HashMap;
  */
 public class AtomicRequest {
 
-    public int timestamp = 0;
-    public int wr = 0;
     public int rid;
+    public int wr;
+    public int timestamp;
     public int acks;
     public HashMap<Address, ReadListValue> readlist;
     public boolean reading;
@@ -26,6 +26,7 @@ public class AtomicRequest {
     {
         this.key = key;
         this.rid = rid;
+        this.wr = wr;
         this.acks = acks;
         this.readlist = readlist;
         this.reading = reading;

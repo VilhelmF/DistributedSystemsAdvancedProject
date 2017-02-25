@@ -24,8 +24,8 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     //******* Fields ******
     final static Logger LOG = LoggerFactory.getLogger(ReadImposeWriteConsultMajority.class);
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
-    private int timestamp = 0;
-    private int wr = 0;
+    //private int timestamp = 0;
+    //private int wr = 0;
     private final HashMap<Integer, Object> keyValueStore = new HashMap<>();
     //private int acks = 0;
     //private Object readVal = null;
