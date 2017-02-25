@@ -2,7 +2,6 @@ package se.kth.id2203.simulation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.kvstore.GetOperation;
 import se.kth.id2203.kvstore.OpResponse;
 import se.kth.id2203.kvstore.PutOperation;
 import se.kth.id2203.networking.Message;
@@ -30,6 +29,7 @@ public class PutClient extends ComponentDefinition {
     private final Map<UUID, String> pending = new TreeMap<>();
     private List<UUID> putID = new ArrayList<>();
     private List<UUID> getID = new ArrayList<>();
+    private int putResponse = 0;
     //******* Handlers ******
     protected final Handler<Start> startHandler = new Handler<Start>() {
 
@@ -38,7 +38,7 @@ public class PutClient extends ComponentDefinition {
             int messages = res.get("messages", Integer.class);
 
             for (int i = 0; i < messages; i++) {
-                PutOperation op = new PutOperation("" + i, "Value: " + 1);
+                PutOperation op = new PutOperation("" + i, "Value: " + i);
                 LOG.info("OP id: " + op.id);
                 RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
                 trigger(new Message(self, server, rm), net);
@@ -70,21 +70,28 @@ public class PutClient extends ComponentDefinition {
             if (key != null && putID.contains(content.id)) {
                 LOG.info("Putting to res: " + content.status.toString());
                 res.put(key, content.status.toString());
+                LOG.info("Key was:  " + key);
+                putResponse++;
+                /*
                 GetOperation op = new GetOperation(key);
                 LOG.info("GetOP id: " + op.id);
                 RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
                 trigger(new Message(self, server, rm), net);
                 pending.put(op.id, op.key);
                 getID.add(op.id);
-                LOG.info("Sending {}", op);
-
+                LOG.info("Sending {}", op);*/
             }  else if (key != null && getID.contains(content.id)) {
                 //LOG.info("Putting to res: " + content.response);
-                String resKey = key + messages;
-                res.put(resKey, content.response);
+                LOG.info("Got the get response: " + key + " " +  content.id + " " + content.response);
+                int tempKey = Integer.parseInt(key) + messages;
+                LOG.info("Reskey: " + tempKey + "   Key: " + key);
+                String resp = content.response;
+                String resKey = "" + tempKey;
+                res.put(resKey, resp);
             } else {
                 LOG.warn("ID {} was not pending! Ignoring response.", content.id);
             }
+
         }
     };
 

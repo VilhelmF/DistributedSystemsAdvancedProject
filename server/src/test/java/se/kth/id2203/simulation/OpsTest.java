@@ -68,8 +68,9 @@ public class OpsTest {
             // of course the correct response should be SUCCESS not NOT_IMPLEMENTED, but like this the test passes
         }
         for (int i = NUM_MESSAGES; i < 2 * NUM_MESSAGES - 2; i++) {
-            LOG.info(res.get(""+ NUM_MESSAGES + i, String.class));
+            LOG.info(res.get("" + i, String.class));
             int value = i - NUM_MESSAGES;
+            LOG.info("Key to get:" + i + " expected value: " + value);
             Assert.assertEquals("Value: " + value, res.get("" + i, String.class));
         }
     }
