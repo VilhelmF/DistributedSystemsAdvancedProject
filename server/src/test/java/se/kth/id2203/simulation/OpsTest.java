@@ -27,6 +27,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.simulation.epfd.ScenarioKillGen;
 import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.run.LauncherComp;
 
@@ -36,7 +37,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
     
-    private static final int NUM_MESSAGES = 10;
+    private static final int NUM_MESSAGES = 100;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
@@ -65,7 +66,7 @@ public class OpsTest {
             LOG.info(res.get(""+i, String.class));
             Assert.assertEquals("OK", res.get("" + i, String.class));
         }
-        for (int i = NUM_MESSAGES; i < 20; i++) {
+        for (int i = NUM_MESSAGES; i < NUM_MESSAGES*2; i++) {
             LOG.info(res.get(Integer.toString(i), String.class));
             int value = i - NUM_MESSAGES;
             LOG.info("Key to get:" + i + " expected value: " + value);
@@ -74,18 +75,11 @@ public class OpsTest {
     }
 
     @Test
-    public void simpleBroadcastTest() {
-        long seed = 123;
-        SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
-        simpleBootScenario.simulate(LauncherComp.class);
-        Assert.assertEquals("2", res.get("broadcast", String.class));
-    }
-
-    @Test
     public void simpleFailureDetector() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
+        SimulationScenario simpleBootScenario = ScenarioKillGen.simpleOps(6);
+        simpleBootScenario.simulate(LauncherComp.class);
+        Assert.assertEquals("1", res.get("suspects", String.class));
     }
 }
