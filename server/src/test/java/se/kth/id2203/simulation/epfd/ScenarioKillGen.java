@@ -21,15 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package se.kth.id2203.simulation;
+package se.kth.id2203.simulation.epfd;
 
 import se.kth.id2203.ParentComponent;
 import se.kth.id2203.networking.NetAddress;
+import se.kth.id2203.simulation.PutClient;
 import se.sics.kompics.Init;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.adaptor.Operation1;
 import se.sics.kompics.simulator.adaptor.distributions.extra.BasicIntSequentialDistribution;
+import se.sics.kompics.simulator.events.system.KillNodeEvent;
 import se.sics.kompics.simulator.events.system.StartNodeEvent;
 
 import java.net.InetAddress;
@@ -41,8 +43,9 @@ import java.util.Map;
  *
  * @author Lars Kroll <lkroll@kth.se>
  */
+
 @SuppressWarnings("Duplicates")
-public abstract class ScenarioGen {
+public abstract class ScenarioKillGen {
 
     private static final Operation1 startServerOp = new Operation1<StartNodeEvent, Integer>() {
 
@@ -88,6 +91,7 @@ public abstract class ScenarioGen {
                     if (self != 1) { // don't put this at the bootstrap server, or it will act as a bootstrap client
                         config.put("id2203.project.bootstrap-address", bsAdr);
                     }
+                    config.put("epfd.simulation.checktimeout", 2000);
                     return config;
                 }
             };
@@ -144,6 +148,33 @@ public abstract class ScenarioGen {
         }
     };
 
+    static Operation1 killNodeOp = new Operation1<KillNodeEvent, Integer>() {
+        @Override
+        public KillNodeEvent generate(final Integer self) {
+            return new KillNodeEvent() {
+                NetAddress selfAdr;
+
+                {
+                    try {
+                        selfAdr = new NetAddress(InetAddress.getByName("192.193.0." + self), 10000);
+                    } catch (UnknownHostException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+
+                @Override
+                public Address getNodeAddress() {
+                    return selfAdr;
+                }
+
+                @Override
+                public String toString() {
+                    return "KillNode<" + selfAdr.toString() + ">";
+                }
+            };
+        }
+    };
+
     public static SimulationScenario simpleOps(final int servers) {
         return new SimulationScenario() {
             {
@@ -154,6 +185,13 @@ public abstract class ScenarioGen {
                     }
                 };
 
+                SimulationScenario.StochasticProcess killer = new SimulationScenario.StochasticProcess() {
+                    {
+                        eventInterArrivalTime(constant(0));
+                        raise(1, killNodeOp, new BasicIntSequentialDistribution(1));
+                    }
+                };
+
                 SimulationScenario.StochasticProcess startClients = new SimulationScenario.StochasticProcess() {
                     {
                         eventInterArrivalTime(constant(1000));
@@ -161,7 +199,8 @@ public abstract class ScenarioGen {
                     }
                 };
                 startCluster.start();
-                startClients.startAfterTerminationOf(300000, startCluster);
+                startClients.startAfterTerminationOf(10000, startCluster);
+                killer.startAfterTerminationOf(30000, startClients);
                 terminateAfterTerminationOf(100000, startClients);
             }
         };

@@ -1,4 +1,4 @@
-package se.kth.id2203.simulation;
+package se.kth.id2203.simulation.broadcast;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +7,9 @@ import se.kth.id2203.kvstore.OpResponse;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.overlay.LookupTable;
+import se.kth.id2203.simulation.PutClient;
+import se.kth.id2203.simulation.SimulationResultMap;
+import se.kth.id2203.simulation.SimulationResultSingleton;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
@@ -30,13 +33,13 @@ public class BroadCastClient extends ComponentDefinition {
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     private final Map<UUID, String> pending = new TreeMap<>();
 
-    protected final Handler<Start> startHandler = new Handler<Start>() {
-        @Override
-        public void handle(Start start) {
-            LookupTable lookupTable = new LookupTable();
 
-            trigger(new TopologyMessage(lookupTable.getPartition(self)), beb);
-            trigger(new BEB_Broadcast(self, new BroadcastTest(self, 0)), beb);
+    protected final ClassMatchedHandler<BroadcastMessage, Message> broadcastHandler = new ClassMatchedHandler<BroadcastMessage, Message>() {
+
+        @Override
+        public void handle(BroadcastMessage content, Message context) {
+            LOG.info("Received BEB_Broadcast");
+            trigger(new BEB_Broadcast(self, new BEB_Deliver(null)), beb);
         }
     };
 
@@ -44,18 +47,18 @@ public class BroadCastClient extends ComponentDefinition {
 
         @Override
         public void handle(BEB_Deliver content, Message context) {
-            Object responsess = res.get("broadcast", String.class);
-            if (responsess == null) {
+            LOG.info("Got BEB_DELIVER at : " + self.toString());
+            String num = res.get("broadcast", String.class);
+            if (num == null) {
                 res.put("broadcast", "1");
             } else {
-                int temp = Integer.parseInt((String)responsess) + 1;
-                res.put("broadcast", Integer.toString(temp));
+                res.put("broadcast", Integer.toString(Integer.parseInt(num) + 1));
             }
         }
     };
 
     {
-        subscribe(startHandler, control);
+        subscribe(broadcastHandler, net);
         subscribe(responseHandler, net);
     }
 }
