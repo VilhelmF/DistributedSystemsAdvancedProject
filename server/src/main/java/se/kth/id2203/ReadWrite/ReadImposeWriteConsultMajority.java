@@ -3,7 +3,9 @@ package se.kth.id2203.ReadWrite;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.atomicregister.*;
-import se.kth.id2203.broadcasting.*;
+import se.kth.id2203.broadcasting.BEB_Broadcast;
+import se.kth.id2203.broadcasting.BestEffortBroadcast;
+import se.kth.id2203.failuredetector.Topology_Change;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
@@ -46,6 +48,16 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             requests.put(ar.key, ar);
 
             trigger(new BEB_Broadcast(self, new Read(self, ar.rid, readRequest.key, readRequest.id)), beb);
+        }
+    };
+
+    protected final Handler<Topology_Change> topologyChangeHandler = new Handler<Topology_Change>() {
+
+        @Override
+        public void handle(Topology_Change tc) {
+            LOG.info("Received a topology change!");
+            LOG.info("Changing N: " + tc.change);
+            N += tc.change;
         }
     };
 
@@ -218,6 +230,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     {
         subscribe(readRequestHandler, nnar);
         subscribe(writeRequestHandler, nnar);
+        subscribe(topologyChangeHandler, nnar);
         //subscribe(casRequestHandler, nnar);
         subscribe(readHandler, net);
         subscribe(writeHandler, net);

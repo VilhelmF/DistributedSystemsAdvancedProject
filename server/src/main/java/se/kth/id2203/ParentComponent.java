@@ -51,6 +51,7 @@ public class ParentComponent
         connect(boot.getPositive(Bootstrapping.class), overlay.getNegative(Bootstrapping.class), Channel.TWO_WAY);
         connect(net, overlay.getNegative(Network.class), Channel.TWO_WAY);
         connect(beb, overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
+        connect(atomicRegisterPos, kv.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
         // KV
         connect(overlay.getPositive(Routing.class), kv.getNegative(Routing.class), Channel.TWO_WAY);
         connect(net, kv.getNegative(Network.class), Channel.TWO_WAY);
@@ -61,6 +62,7 @@ public class ParentComponent
         connect(net, basicbroadcast.getNegative(Network.class), Channel.TWO_WAY);
         //RIWC
         connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
+        connect(riwc.getPositive(AtomicRegister.class), overlay.getNegative(AtomicRegister.class), Channel.TWO_WAY);
         connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
         //EPFD
         connect(epfd.getPositive(EventuallyPerfectFailureDetector.class), overlay.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
