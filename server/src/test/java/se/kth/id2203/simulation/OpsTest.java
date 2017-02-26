@@ -36,7 +36,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
     
-    private static final int NUM_MESSAGES = 10;
+    private static final int NUM_MESSAGES = 1;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
@@ -45,7 +45,7 @@ public class OpsTest {
     public void simpleGetTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
@@ -58,14 +58,14 @@ public class OpsTest {
     public void simplePutTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
             LOG.info(res.get(""+i, String.class));
             Assert.assertEquals("OK", res.get("" + i, String.class));
         }
-        for (int i = NUM_MESSAGES; i < 20; i++) {
+        for (int i = NUM_MESSAGES; i < 2*NUM_MESSAGES; i++) {
             LOG.info(res.get(Integer.toString(i), String.class));
             int value = i - NUM_MESSAGES;
             LOG.info("Key to get:" + i + " expected value: " + value);
@@ -77,7 +77,7 @@ public class OpsTest {
     public void simpleBroadcastTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(4);
         simpleBootScenario.simulate(LauncherComp.class);
         Assert.assertEquals("2", res.get("broadcast", String.class));
     }

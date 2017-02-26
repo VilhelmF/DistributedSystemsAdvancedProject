@@ -43,6 +43,7 @@ import se.sics.kompics.timer.Timer;
 
 import java.util.Collection;
 import java.util.NavigableSet;
+import java.util.TreeSet;
 
 /**
  * The V(ery)S(imple)OverlayManager.
@@ -72,6 +73,8 @@ public class VSOverlayManager extends ComponentDefinition {
 
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
+    final int partitions = config().getValue("id2203.project.partitionCount", Integer.class);
+    final int partitionSize = config().getValue("id2203.project.replicationDegree", Integer.class);
     private LookupTable lut = null;
     private NavigableSet<NetAddress> partition = null;
 
@@ -81,7 +84,7 @@ public class VSOverlayManager extends ComponentDefinition {
         @Override
         public void handle(GetInitialAssignments event) {
             LOG.info("Generating LookupTable...");
-            LookupTable lut = LookupTable.generate(event.nodes);
+            LookupTable lut = LookupTable.generatePartitionedTable(event.nodes, partitions, partitionSize);
             LOG.debug("Generated assignments:\n{}", lut);
             trigger(new InitialAssignments(lut), boot);
         }
@@ -105,10 +108,12 @@ public class VSOverlayManager extends ComponentDefinition {
                     }
                     System.exit(0);
                 }
-                partition.remove(self);
+                NavigableSet<NetAddress> failureTopology = new TreeSet<>(partition);
+                failureTopology.remove(self);
+
                 LOG.info(self + ": The topolgy I'm sending - " + partition.toString());
                 trigger(new TopologyMessage(partition), beb);
-                trigger(new StartMessage(partition), epfd);
+                trigger(new StartMessage(failureTopology), epfd);
                 LOG.info(partition.toString());
             } else {
                 LOG.error("Got invalid NodeAssignment type. Expected: LookupTable; Got: {}", event.assignment.getClass());
