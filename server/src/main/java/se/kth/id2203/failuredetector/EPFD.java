@@ -51,6 +51,9 @@ public class EPFD extends ComponentDefinition {
         @Override
         public void handle(StartMessage startMessage) {
             topology = startMessage.topology;
+            for (NetAddress na : topology) {
+                alive.add(na);
+            }
             startTimer(period);
         }
     };
