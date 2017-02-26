@@ -48,16 +48,6 @@ public class PutClient extends ComponentDefinition {
                 LOG.info("Sending {}", op);
             }
 
-            /*
-            for (int i = 0; i < messages; i++) {
-                GetOperation op = new GetOperation("" + i);
-                LOG.info("OP id: " + op.id);
-                RouteMsg rm = new RouteMsg(op.key, op); // don't know which partition is responsible, so ask the bootstrap server to forward it
-                trigger(new Message(self, server, rm), net);
-                pending.put(op.id, op.key);
-                getID.add(op.id);
-                LOG.info("Sending {}", op);
-            } */
         }
     };
     protected final ClassMatchedHandler<OpResponse, Message> responseHandler = new ClassMatchedHandler<OpResponse, Message>() {
