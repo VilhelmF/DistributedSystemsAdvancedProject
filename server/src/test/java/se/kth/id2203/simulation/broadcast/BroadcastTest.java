@@ -21,7 +21,7 @@ public class BroadcastTest {
     final static Logger LOG = LoggerFactory.getLogger(BroadcastTest.class);
 
     @Test
-    public void simpleBroadcastTest() {
+    public void BestEffortBroadcastTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
         SimulationScenario simpleBootScenario = ScenarioGenBroadcast.simpleBroadcast(NUM_MESSAGES);

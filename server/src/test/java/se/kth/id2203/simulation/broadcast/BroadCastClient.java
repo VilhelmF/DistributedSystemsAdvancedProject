@@ -39,6 +39,7 @@ public class BroadCastClient extends ComponentDefinition {
         @Override
         public void handle(BroadcastMessage content, Message context) {
             LOG.info("Received BEB_Broadcast");
+            trigger(new TopologyMessage(content.recipients), beb);
             trigger(new BEB_Broadcast(self, new BEB_Deliver(null)), beb);
         }
     };

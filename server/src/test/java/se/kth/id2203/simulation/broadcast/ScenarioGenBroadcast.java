@@ -74,6 +74,7 @@ public class ScenarioGenBroadcast {
         }
     };
 
+
     static Operation startObserverOp = new Operation<StartNodeEvent>() {
         @Override
         public StartNodeEvent generate() {
@@ -133,7 +134,6 @@ public class ScenarioGenBroadcast {
                 };
                 startServer.start();
                 observer.startAfterTerminationOf(0, startServer);
-                //startClients.startAfterTerminationOf(1000, observer);
                 terminateAfterTerminationOf(10000, observer);
             }
         };

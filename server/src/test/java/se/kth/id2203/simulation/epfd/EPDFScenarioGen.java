@@ -23,12 +23,16 @@
  */
 package se.kth.id2203.simulation.epfd;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.kth.id2203.ParentComponent;
 import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.simulation.PutClient;
+import se.kth.id2203.simulation.broadcast.BroadcastObserver;
 import se.sics.kompics.Init;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.simulator.SimulationScenario;
+import se.sics.kompics.simulator.adaptor.Operation;
 import se.sics.kompics.simulator.adaptor.Operation1;
 import se.sics.kompics.simulator.adaptor.distributions.extra.BasicIntSequentialDistribution;
 import se.sics.kompics.simulator.events.system.KillNodeEvent;
@@ -45,7 +49,9 @@ import java.util.Map;
  */
 
 @SuppressWarnings("Duplicates")
-public abstract class ScenarioKillGen {
+public abstract class EPDFScenarioGen {
+
+    private static final Logger LOG = LoggerFactory.getLogger(BroadcastObserver.class);
 
     private static final Operation1 startServerOp = new Operation1<StartNodeEvent, Integer>() {
 
@@ -71,7 +77,7 @@ public abstract class ScenarioKillGen {
 
                 @Override
                 public Class getComponentDefinition() {
-                    return ParentComponent.class;
+                    return EPFDParentComponent.class;
                 }
 
                 @Override
@@ -98,21 +104,27 @@ public abstract class ScenarioKillGen {
         }
     };
 
-    private static final Operation1 startClientOp = new Operation1<StartNodeEvent, Integer>() {
 
+    static Operation startObserverOp = new Operation<StartNodeEvent>() {
         @Override
-        public StartNodeEvent generate(final Integer self) {
+        public StartNodeEvent generate() {
             return new StartNodeEvent() {
-                final NetAddress selfAdr;
-                final NetAddress bsAdr;
+                NetAddress selfAdr;
 
                 {
                     try {
-                        selfAdr = new NetAddress(InetAddress.getByName("192.168.1." + self), 45678);
-                        bsAdr = new NetAddress(InetAddress.getByName("192.168.0.1"), 45678);
+                        selfAdr = new NetAddress(InetAddress.getByName("192.168.0.1"), 0);
                     } catch (UnknownHostException ex) {
                         throw new RuntimeException(ex);
                     }
+                }
+
+                @Override
+                public Map<String, Object> initConfigUpdate() {
+                    HashMap<String, Object> config = new HashMap<>();
+                    config.put("epfd.simulation.checkTimeout", 2000);
+                    config.put("id2203.project.address", selfAdr);
+                    return config;
                 }
 
                 @Override
@@ -122,27 +134,12 @@ public abstract class ScenarioKillGen {
 
                 @Override
                 public Class getComponentDefinition() {
-                    //return BroadCastClient.class;
-                    return PutClient.class;
-                    //return ScenarioClient.class;
-                }
-
-                @Override
-                public String toString() {
-                    return "StartClient<" + selfAdr.toString() + ">";
+                    return EPFDObserver.class;
                 }
 
                 @Override
                 public Init getComponentInit() {
-                    return Init.NONE;
-                }
-
-                @Override
-                public Map<String, Object> initConfigUpdate() {
-                    HashMap<String, Object> config = new HashMap<>();
-                    config.put("id2203.project.address", selfAdr);
-                    config.put("id2203.project.bootstrap-address", bsAdr);
-                    return config;
+                    return new EPFDObserver.Init(10, 2);
                 }
             };
         }
@@ -156,7 +153,7 @@ public abstract class ScenarioKillGen {
 
                 {
                     try {
-                        selfAdr = new NetAddress(InetAddress.getByName("192.193.0." + self), 10000);
+                        selfAdr = new NetAddress(InetAddress.getByName("192.168.0." + self), 45678);
                     } catch (UnknownHostException ex) {
                         throw new RuntimeException(ex);
                     }
@@ -175,7 +172,7 @@ public abstract class ScenarioKillGen {
         }
     };
 
-    public static SimulationScenario simpleOps(final int servers) {
+    public static SimulationScenario failureDetectorSimulation(final int servers, final int kill) {
         return new SimulationScenario() {
             {
                 SimulationScenario.StochasticProcess startCluster = new SimulationScenario.StochasticProcess() {
@@ -185,23 +182,23 @@ public abstract class ScenarioKillGen {
                     }
                 };
 
+                SimulationScenario.StochasticProcess startObserver = new SimulationScenario.StochasticProcess() {
+                    {
+                        raise(1, startObserverOp);
+                    }
+                };
+                /*
                 SimulationScenario.StochasticProcess killer = new SimulationScenario.StochasticProcess() {
                     {
                         eventInterArrivalTime(constant(0));
-                        raise(1, killNodeOp, new BasicIntSequentialDistribution(1));
+                        raise(kill, killNodeOp, new BasicIntSequentialDistribution(1));
                     }
                 };
-
-                SimulationScenario.StochasticProcess startClients = new SimulationScenario.StochasticProcess() {
-                    {
-                        eventInterArrivalTime(constant(1000));
-                        raise(1, startClientOp, new BasicIntSequentialDistribution(1));
-                    }
-                };
+                */
                 startCluster.start();
-                startClients.startAfterTerminationOf(10000, startCluster);
-                killer.startAfterTerminationOf(30000, startClients);
-                terminateAfterTerminationOf(100000, startClients);
+                startObserver.startAfterTerminationOf(1000, startCluster);
+                //killer.startAfterTerminationOf(1000, startObserver);
+                terminateAfterTerminationOf(20000, startObserver);
             }
         };
     }

@@ -3,10 +3,8 @@ package se.kth.id2203.simulation.epfd;
 import se.kth.id2203.broadcasting.BasicBroadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.failuredetector.EPFD;
-import se.sics.kompics.Component;
-import se.sics.kompics.ComponentDefinition;
-import se.sics.kompics.Init;
-import se.sics.kompics.Positive;
+import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
+import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
 
@@ -21,9 +19,15 @@ public class EPFDParentComponent extends ComponentDefinition {
     protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
 
     //******* Children ******
-    protected final Component epfd = create(EPFD.class, Init.NONE);
     protected final Component epfdClient = create(EPFDClient.class, Init.NONE);
-    protected final Component basicbroadcast = create(BasicBroadcast.class, Init.NONE);
+    protected final Component epfd = create(EPFD.class, Init.NONE);
+
+    {
+        //connect(net, epfdObserver.getNegative(Network.class), Channel.TWO_WAY);
+        connect(net, epfdClient.getNegative(Network.class), Channel.TWO_WAY);
+        connect(epfdClient.getNegative(EventuallyPerfectFailureDetector.class), epfd.getPositive(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
+        //connect(epfdObserver.getNegative(EventuallyPerfectFailureDetector.class), epfd.getPositive(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
+    }
 
 
 
