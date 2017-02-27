@@ -1,9 +1,6 @@
 package se.kth.id2203.simulation.broadcast;
 
-import se.kth.id2203.broadcasting.BasicBroadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
-import se.kth.id2203.failuredetector.EPFD;
-import se.kth.id2203.simulation.epfd.EPFDClient;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.timer.Timer;
@@ -21,7 +18,6 @@ public class BroadcastParentComponent extends ComponentDefinition {
     protected final Component broadcastObserver = create(BroadcastObserver.class, new BroadcastObserver.Init(10));
     protected final Component broadcastClient = create(BroadCastClient.class, Init.NONE);
     protected final Component basicbroadcast = create(TestBroadcast.class, Init.NONE);
-
 
     {
         connect(broadcastClient.getNegative(BestEffortBroadcast.class), basicbroadcast.getPositive(BestEffortBroadcast.class), Channel.TWO_WAY);
