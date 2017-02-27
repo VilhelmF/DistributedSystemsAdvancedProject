@@ -100,7 +100,6 @@ public class EPFDObserver extends ComponentDefinition {
                         }
                         trigger(new Message(self, new NetAddress(address.getIp(), address.getPort()), new BroadcastMessage(null, null, topology)), net);
                         tearDown();
-                        break;
                     }
                 }
             }

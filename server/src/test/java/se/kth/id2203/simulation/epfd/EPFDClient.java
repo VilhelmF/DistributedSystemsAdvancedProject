@@ -8,15 +8,18 @@ import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
 import se.kth.id2203.failuredetector.StartMessage;
 import se.kth.id2203.failuredetector.Suspect;
 import se.kth.id2203.networking.Message;
+import se.kth.id2203.networking.NetAddress;
 import se.kth.id2203.simulation.SimulationResultMap;
 import se.kth.id2203.simulation.SimulationResultSingleton;
 import se.sics.kompics.*;
+import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 import se.sics.kompics.simulator.util.GlobalView;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
 
+import java.util.TreeSet;
 import java.util.UUID;
 
 /**
@@ -28,16 +31,18 @@ public class EPFDClient extends ComponentDefinition {
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
 
     Positive<Timer> timer = requires(Timer.class);
-    Negative<Network> network = provides(Network.class);
-    Positive<EventuallyPerfectFailureDetector> epfd = requires(EventuallyPerfectFailureDetector.class);
     Positive<Network> net = requires(Network.class);
+    Positive<EventuallyPerfectFailureDetector> epfd = requires(EventuallyPerfectFailureDetector.class);
 
-    protected final ClassMatchedHandler<BroadcastMessage, Message> broadcastHandler = new ClassMatchedHandler<BroadcastMessage, Message>() {
-
+    Handler<Start> handleStart = new Handler<Start>() {
         @Override
-        public void handle(BroadcastMessage content, Message context) {
-            LOG.info("Received topology");
-            trigger(new StartMessage(content.recipients), epfd);
+        public void handle(Start event) {
+            GlobalView gv = config().getValue("simulation.globalview", GlobalView.class);
+            TreeSet<NetAddress> topology =  new TreeSet<>();
+            for (Address address : gv.getAliveNodes().values()) {
+                topology.add(new NetAddress(address.getIp(), address.getPort()));
+            }
+            trigger(new StartMessage(topology), epfd);
         }
     };
 
@@ -56,7 +61,7 @@ public class EPFDClient extends ComponentDefinition {
 
 
     {
+        subscribe(handleStart, control);
         subscribe(suspectHandler, epfd);
-        subscribe(broadcastHandler, net);
     }
 }

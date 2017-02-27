@@ -105,6 +105,7 @@ public abstract class EPDFScenarioGen {
     };
 
 
+
     static Operation startObserverOp = new Operation<StartNodeEvent>() {
         @Override
         public StartNodeEvent generate() {
@@ -139,7 +140,7 @@ public abstract class EPDFScenarioGen {
 
                 @Override
                 public Init getComponentInit() {
-                    return new EPFDObserver.Init(10, 2);
+                    return new EPFDObserver.Init(5, 1);
                 }
             };
         }
@@ -184,21 +185,22 @@ public abstract class EPDFScenarioGen {
 
                 SimulationScenario.StochasticProcess startObserver = new SimulationScenario.StochasticProcess() {
                     {
+                        eventInterArrivalTime(constant(1000));
                         raise(1, startObserverOp);
                     }
                 };
-                /*
+
                 SimulationScenario.StochasticProcess killer = new SimulationScenario.StochasticProcess() {
                     {
                         eventInterArrivalTime(constant(0));
                         raise(kill, killNodeOp, new BasicIntSequentialDistribution(1));
                     }
                 };
-                */
+
                 startCluster.start();
-                startObserver.startAfterTerminationOf(1000, startCluster);
-                //killer.startAfterTerminationOf(1000, startObserver);
-                terminateAfterTerminationOf(20000, startObserver);
+                //startObserver.startAfterTerminationOf(0, startCluster);
+                killer.startAfterTerminationOf(100000, startCluster);
+                terminateAfterTerminationOf(100000, killer);
             }
         };
     }
