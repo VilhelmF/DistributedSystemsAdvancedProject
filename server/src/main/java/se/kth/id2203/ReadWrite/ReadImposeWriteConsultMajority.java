@@ -27,12 +27,8 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
     final static Logger LOG = LoggerFactory.getLogger(ReadImposeWriteConsultMajority.class);
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private final HashMap<Integer, Object> keyValueStore = new HashMap<>();
-    private Object casReferenceVal = null;
-    private Object casNewVal = null;
-    private Code casCode = null;
     private HashMap<Integer, AtomicRequest> requests = new HashMap<>();
 
-    private boolean cas = false;
     private int N = config().getValue("id2203.project.replicationDegree", Integer.class);
 
     //******* Handlers ******
@@ -60,21 +56,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
             N += tc.change;
         }
     };
-
-    /*
-    protected final Handler<AR_CAS_Request> casRequestHandler = new Handler<AR_CAS_Request>() {
-        @Override
-        public void handle(AR_CAS_Request casRequest) {
-            rid++;
-            casReferenceVal = casRequest.referenceValue;
-            casNewVal = casRequest.newValue;
-            acks = 0;
-            readlist.clear();
-            cas = true;
-            trigger(new BEB_Broadcast(self, new Read(self, rid, casRequest.key, casRequest.opId)), beb);
-        }
-    };
-    */
 
     protected final Handler<AR_Write_Request> writeRequestHandler = new Handler<AR_Write_Request>() {
 
@@ -145,18 +126,7 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     } else {
                         maxtimestamp++;
                         rr = getRank(self);
-                        if (cas) {
-                            if (keyValueStore.get(value.key).equals(casReferenceVal)) {
-                                casCode = Code.OK;
-                                broadcastval = casNewVal;
-                            } else {
-                                casCode = Code.KEY_MISMATCH;
-                                broadcastval = null;
-                            }
-
-                        } else {
-                            broadcastval = ar.writeVal;
-                        }
+                        broadcastval = ar.writeVal;
                     }
                     requests.put(ar.key, ar);
                     trigger(new BEB_Broadcast(self, new Write(self, ar.rid, maxtimestamp, rr, value.key, broadcastval, value.opId)), beb);
@@ -180,9 +150,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                         trigger(new AR_Read_Response(ar.readVal, ack.opId), nnar);
                         //requests.remove(request.rid);
                         requests.put(ar.key, ar);
-                    } else if (cas) {
-                        cas = false;
-                        trigger(new AR_CAS_Response(ack.opId, casCode), nnar);
                     } else {
                         LOG.info("Apparently I'm writing...");
                         trigger(new AR_Write_Response(ack.opId), nnar);
@@ -231,7 +198,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         subscribe(readRequestHandler, nnar);
         subscribe(writeRequestHandler, nnar);
         subscribe(topologyChangeHandler, nnar);
-        //subscribe(casRequestHandler, nnar);
         subscribe(readHandler, net);
         subscribe(writeHandler, net);
         subscribe(valueHandler, net);

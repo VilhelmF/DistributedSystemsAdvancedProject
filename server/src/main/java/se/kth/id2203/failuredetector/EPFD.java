@@ -50,6 +50,7 @@ public class EPFD extends ComponentDefinition {
     protected final Handler<StartMessage> startHandler = new Handler<StartMessage>() {
         @Override
         public void handle(StartMessage startMessage) {
+            LOG.info("Received Start Message");
             topology = startMessage.topology;
             for (NetAddress na : topology) {
                 alive.add(na);
