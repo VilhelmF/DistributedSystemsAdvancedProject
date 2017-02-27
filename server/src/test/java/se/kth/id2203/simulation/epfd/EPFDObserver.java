@@ -1,9 +1,10 @@
-package se.kth.id2203.simulation.broadcast;
+package se.kth.id2203.simulation.epfd;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.broadcasting.BroadcastMessage;
-import se.kth.id2203.broadcasting.TopologyMessage;
+import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
+import se.kth.id2203.failuredetector.StartMessage;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.ComponentDefinition;
@@ -18,26 +19,34 @@ import se.sics.kompics.timer.CancelPeriodicTimeout;
 import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.Timeout;
 import se.sics.kompics.timer.Timer;
+import sun.nio.ch.Net;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.UUID;
 
 /**
  * Created by sindrikaldal on 26/02/17.
  */
-public class BroadcastObserver extends ComponentDefinition {
+@SuppressWarnings("Duplicates")
+public class EPFDObserver extends ComponentDefinition {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BroadcastObserver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(EPFDObserver.class);
     private final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
 
     Positive<Timer> timer = requires(Timer.class);
     Positive<Network> net = requires(Network.class);
+    Positive<EventuallyPerfectFailureDetector> epfd = requires(EventuallyPerfectFailureDetector.class);
 
 
+    private final int minDeadNodes;
     private final int minAliveNodes;
 
     private UUID timerId;
 
-    public BroadcastObserver(Init init) {
+    public EPFDObserver(Init init) {
+        minDeadNodes = init.minDeadNodes;
         minAliveNodes = init.minAliveNodes;
 
         subscribe(handleStart, control);
@@ -52,12 +61,14 @@ public class BroadcastObserver extends ComponentDefinition {
     };
 
 
-    public static class Init extends se.sics.kompics.Init<BroadcastObserver> {
+    public static class Init extends se.sics.kompics.Init<EPFDObserver> {
 
         public final int minAliveNodes;
+        public final int minDeadNodes;
 
-        public Init(int minAliveNodes) {
+        public Init(int minAliveNodes, int minDeadNodes) {
             this.minAliveNodes = minAliveNodes;
+            this.minDeadNodes = minDeadNodes;
         }
     }
 
@@ -71,17 +82,20 @@ public class BroadcastObserver extends ComponentDefinition {
         public void handle(CheckTimeout event) {
             GlobalView gv = config().getValue("simulation.globalview", GlobalView.class);
 
-            if(gv.getAliveNodes().size() > minAliveNodes) {
+            if(gv.getDeadNodes().size() > minDeadNodes) {
+                //TODO WHAT TO DO?
+            } else if (gv.getAliveNodes().size() >= minAliveNodes) {
 
                 Map<Identifier, Address> aliveNodes = gv.getAliveNodes();
                 Iterator iterator = aliveNodes.values().iterator();
 
+                LOG.info("Enough live nodes");
                 while(iterator.hasNext()) {
                     Address address = (Address) iterator.next();
                     TreeSet<NetAddress> topology = new TreeSet<>();
                     if (!self.equals(address.getIp())) {
                         for (Address add: aliveNodes.values()
-                             ) {
+                                ) {
                             topology.add(new NetAddress(add.getIp(), add.getPort()));
                         }
                         trigger(new Message(self, new NetAddress(address.getIp(), address.getPort()), new BroadcastMessage(null, null, topology)), net);
@@ -89,14 +103,13 @@ public class BroadcastObserver extends ComponentDefinition {
                         break;
                     }
                 }
-
             }
 
         }
     };
 
     private void schedulePeriodicCheck() {
-        long period = config().getValue("broadcast.simulation.checkTimeout", Long.class);
+        long period = config().getValue("epfd.simulation.checkTimeout", Long.class);
         SchedulePeriodicTimeout spt = new SchedulePeriodicTimeout(period, period);
         CheckTimeout timeout = new CheckTimeout(spt);
         spt.setTimeoutEvent(timeout);
@@ -109,5 +122,10 @@ public class BroadcastObserver extends ComponentDefinition {
         public CheckTimeout(SchedulePeriodicTimeout spt) {
             super(spt);
         }
+    }
+
+    {
+        subscribe(handleStart, control);
+        subscribe(handleCheck, timer);
     }
 }

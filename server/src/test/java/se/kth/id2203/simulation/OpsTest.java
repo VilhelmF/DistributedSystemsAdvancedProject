@@ -27,7 +27,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.simulation.epfd.ScenarioKillGen;
+import se.kth.id2203.simulation.epfd.EPDFScenarioGen;
 import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.run.LauncherComp;
 
@@ -72,14 +72,5 @@ public class OpsTest {
             LOG.info("Key to get:" + i + " expected value: " + value);
             Assert.assertEquals("Value: " + value, res.get("" + i, String.class));
         }
-    }
-
-    @Test
-    public void simpleFailureDetector() {
-        long seed = 123;
-        SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioKillGen.simpleOps(6);
-        simpleBootScenario.simulate(LauncherComp.class);
-        Assert.assertEquals("1", res.get("suspects", String.class));
     }
 }
