@@ -18,6 +18,7 @@ import java.util.List;
 /**
  * Created by sindrikaldal on 27/02/17.
  */
+@SuppressWarnings("Since15")
 public class MultiPaxos extends ComponentDefinition {
 
     //******* Ports ******
@@ -28,26 +29,28 @@ public class MultiPaxos extends ComponentDefinition {
     //******* Fields ******
     public List<NetAddress> topology = new ArrayList<>();
     public int N;
-    private int t;
-    private int prepts;
-    private int ats;
-    private List<Object> av;
-    private int al;
-    private int pts;
-    private List<Object> pv;
-    private int pl;
-    private List<Object> proposedValues;
+    private int t;                                          //Logical clock.
+    private int prepts;                                     //Acceptor: Prepared timestamp.
+    private int ats;                                        //Acceptor: Timestamp.
+    private List<Object> av;                                //Acceptor: Accepted sequence.
+    private int al;                                         //Acceptor: Length of decided seq.
+    private int pts;                                        //Proposer: Timestamp.
+    private List<Object> pv;                                //Proposer: Proposed seq.
+    private int pl;                                         //Proposer: Length of learned seq.
+    private List<Object> proposedValues;                    //Proposer: Values proposed while preparing.
     private HashMap<Address, PaxosReadlistValue> readlist;
-    private HashMap<Address, Integer> accepted;
-    private HashMap<Address, Integer> decided;
+    private HashMap<Address, Integer> accepted;             //Proposer's knowledge about length of acceptor's longest seq num.
+    private HashMap<Address, Integer> decided;              //Proposer's knowledge about length of acceptor's longest decided seq.
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
 
     //******* Constructor ******
     public MultiPaxos(Init init) {
         this.topology = new ArrayList<>(); // TODO assign topology
         this.N = 3; // TODO assign proper N
+
         this.t = init.t;
         this.prepts = init.prepts;
+
         this.ats = init.ats;
         this.av = init.av;
         this.al = init.al;
@@ -55,6 +58,7 @@ public class MultiPaxos extends ComponentDefinition {
         this.pts = init.pts;
         this.pv = init.pv;
         this.pl = init.pl;
+
         this.proposedValues = init.proposedValues;
         this.readlist = init.readlist;
         this.accepted = init.accepted;
@@ -98,6 +102,7 @@ public class MultiPaxos extends ComponentDefinition {
             this.pv = new ArrayList<>();
             this.pl = 0;
             this.proposedValues = new ArrayList<>();
+            //TODO Init with topology
             this.readlist = new HashMap<>();
             this.accepted = new HashMap<>();
             this.decided = new HashMap<>();
@@ -115,7 +120,11 @@ public class MultiPaxos extends ComponentDefinition {
                 pts = (t * readlist.size()) + selfRank();
                 pv = getPrefix(av, al);
                 pl = 0;
-                proposedValues = propose.values;
+                //proposedValues = propose.values;
+                proposedValues = new ArrayList<>();
+                //TODO create value message.
+                proposedValues.add(value);
+                //TODO Hashmaps with topology. Readlist empty, accepted decided with 0 for each node.
                 readlist.clear();
                 accepted.clear();
                 decided.clear();
@@ -124,16 +133,26 @@ public class MultiPaxos extends ComponentDefinition {
                 }
             }
             else if (readlist.size() <= N / 2) {
-                for (Object obj : propose.values) {
+                proposedValues.add(value);
+                /*for (Object obj : propose.values) {
                     proposedValues.add(obj);
-                }
-            } else if (!pv.equals(propose.values)) {
+                }*/
+            }
+            /*
+            else if (!pv.equals(propose.values)) {
                 for (Object obj : propose.values) {
                     pv.add(obj);
                 }
                 for (NetAddress address : topology) {
                     trigger(new Message(self, address, new Accept(pts, propose.values, pv.size() - 1, t)), net);
                 }
+            }*/
+            else if (!pv.contains(value)) {
+                pv.add(value);
+                for (Address address : readlist.keySet()) {
+                    trigger(new Message(self, (NetAddress) address, new Accept(pts, propose.values, pv.size() - 1, t)), net);
+                }
+
             }
         }
     };
@@ -177,8 +196,25 @@ public class MultiPaxos extends ComponentDefinition {
                     List<Object> vsufTemp = new ArrayList<>();
                     for (PaxosReadlistValue readListValue : readlist.values()) {
                         if (tsTemp < readListValue.getTs() || (tsTemp == readListValue.getTs() && vsufTemp.size() < readListValue.getVsuf().size())) {
-
+                            tsTemp = readListValue.getTs();
+                            vsufTemp = new ArrayList<>(readListValue.getVsuf());
                         }
+                    }
+                    pv.add(vsufTemp);
+                    for (Value value : proposedValues) {
+                        if (!pv.contains(value)) {
+                           pv.add(value);
+                        }
+                    }
+                    for (NetAddress address : topology) {
+                        Integer tempL = decided.get(address);
+                        List<Object> tempSuffix = getSuffix(pv, tempL);
+                        trigger(new Message(self, address, new Accept(pts, tempSuffix, tempL, t)), net);
+                    }
+                } else if (readlist.size() > ((N/2) + 1)) {
+                    trigger(new Message(self, context.getSource(), new Accept(pts, getSuffix(pv, prepareAck.al), al, t)), net);
+                    if (pl != 0) {
+                        trigger(new Message(self, context.getSource(), new Decide(pts, pl, t)), net);
                     }
                 }
             }
@@ -198,9 +234,7 @@ public class MultiPaxos extends ComponentDefinition {
                 if (accept.pvLength < av.size()) {
                     av = getPrefix(av, accept.pvLength);
                 }
-                for (Object obj : accept.values) {
-                    av.add(obj);
-                }
+                av.add(accept.values);
                 trigger(new Message(self, context.getSource(), new AcceptAck(accept.pts, av.size(), t)), net);
             }
         }
@@ -222,6 +256,9 @@ public class MultiPaxos extends ComponentDefinition {
                 }
                 if (pl < acceptAck.l || tempList.size() > N / 2) {
                     pl = acceptAck.l;
+                    for (Address address : readlist.keySet()) {
+                        trigger(new Message(self, (NetAddress) address, new Decide(pts, pl, t)), net);
+                    }
                 }
 
             }
@@ -252,11 +289,11 @@ public class MultiPaxos extends ComponentDefinition {
     }
 
     public List<Object> getSuffix(List<Object> list, int suffix) {
-        List<Object> prefixList = new ArrayList<>();
+        List<Object> suffixList = new ArrayList<>();
         for (int i = suffix; i < list.size(); i++) {
-            prefixList.add(list.get(i));
+            suffixList.add(list.get(i));
         }
-        return prefixList;
+        return suffixList;
     }
 
     public int selfRank() {
