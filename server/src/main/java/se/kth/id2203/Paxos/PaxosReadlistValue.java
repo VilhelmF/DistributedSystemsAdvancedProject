@@ -8,9 +8,9 @@ import java.util.List;
 public class PaxosReadlistValue {
 
     private int ts;
-    private List<Object> vsuf;
+    private List<Propose> vsuf;
 
-    public PaxosReadlistValue(int ts, List<Object> vsuf) {
+    public PaxosReadlistValue(int ts, List<Propose> vsuf) {
         this.ts = ts;
         this.vsuf = vsuf;
     }
@@ -23,11 +23,11 @@ public class PaxosReadlistValue {
         this.ts = ts;
     }
 
-    public List<Object> getVsuf() {
+    public List<Propose> getVsuf() {
         return vsuf;
     }
 
-    public void setVsuf(List<Object> vsuf) {
+    public void setVsuf(List<Propose> vsuf) {
         this.vsuf = vsuf;
     }
 }

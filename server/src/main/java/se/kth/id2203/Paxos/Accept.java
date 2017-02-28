@@ -11,11 +11,11 @@ import java.util.List;
 public class Accept implements KompicsEvent, Serializable {
 
     public final int pts;
-    public final List<Object> values;
+    public final List<Propose> values;
     public final int pvLength;
     public final int t;
 
-    public Accept(int pts, List<Object> values, int pvLength, int t) {
+    public Accept(int pts, List<Propose> values, int pvLength, int t) {
         this.pts = pts;
         this.values = values;
         this.pvLength = pvLength;
