@@ -99,6 +99,7 @@ public class KVService extends ComponentDefinition {
     protected  final Handler<Abort> abortHandler = new Handler<Abort>() {
         @Override
         public void handle(Abort abort) {
+            LOG.info("ABORTING!!!");
             NetAddress src = pending.get(abort.id);
             pending.remove(abort.id);
             trigger(new Message(self, src, new OpResponse(abort.id, "ABORT", Code.NOT_IMPLEMENTED)), net);
