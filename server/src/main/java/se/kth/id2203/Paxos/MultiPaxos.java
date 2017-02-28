@@ -22,8 +22,8 @@ public class MultiPaxos extends ComponentDefinition {
 
     //******* Ports ******
     Positive<Network> net = requires(Network.class);
-    Negative<AbortableSequenceConsensus> asc = provides(AbortableSequenceConsensus.class);
     Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
+    Negative<Paxos>  asc = provides(Paxos.class);
 
     //******* Fields ******
     public NavigableSet<NetAddress> topology;
@@ -42,6 +42,8 @@ public class MultiPaxos extends ComponentDefinition {
     private HashMap<Address, Integer> decided;              //Proposer's knowledge about length of acceptor's longest decided seq.
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
 
+
+    /*
     //******* Constructor ******
     public MultiPaxos(Init init) {
         this.topology = new TreeSet<>(); // TODO assign topology
@@ -108,12 +110,14 @@ public class MultiPaxos extends ComponentDefinition {
 
         }
     }
+    */
 
     //******* Handlers ******
     protected final Handler<StartMessage> startHandler = new Handler<StartMessage>() {
         @Override
         public void handle(StartMessage startMessage) {
             LOG.info("Received Start Message");
+            LOG.info("My Paxos topology: " + startMessage.topology.toString());
 
             // Not fully sure where to handle initialization.
             t = 0;
@@ -144,6 +148,7 @@ public class MultiPaxos extends ComponentDefinition {
         @Override
         public void handle(Propose propose, Message context) {
             // TODO:  What is in the propose message?
+            LOG.info(propose.toString());
             t++;
             if (pts == 0) {
                 pts = (t * readlist.size()) + selfRank();
@@ -310,6 +315,17 @@ public class MultiPaxos extends ComponentDefinition {
             }
         }
     };
+
+    {
+        subscribe(startHandler, asc);
+        subscribe(proposeHandler, asc);
+        subscribe(prepareHandler, net);
+        subscribe(nackHandler, net);
+        subscribe(prepareAckHandler, net);
+        subscribe(acceptHandler, net);
+        subscribe(acceptAckHandler, net);
+        subscribe(decideHandler, net);
+    }
 
     public List<Propose> getPrefix(List<Propose> list, int prefix) {
         List<Propose> prefixList = new ArrayList<>();

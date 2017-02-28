@@ -25,6 +25,9 @@ package se.kth.id2203.kvstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.Paxos.ASCDecide;
+import se.kth.id2203.Paxos.Paxos;
+import se.kth.id2203.Paxos.Propose;
 import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
@@ -50,9 +53,11 @@ public class KVService extends ComponentDefinition {
     protected final Positive<Network> net = requires(Network.class);
     protected final Positive<Routing> route = requires(Routing.class);
     protected final Positive<AtomicRegister> atomicRegister = requires(AtomicRegister.class);
+    protected final Positive<Paxos> asc = requires(Paxos.class);
     //******* Fields ******
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
     private final HashMap<UUID, NetAddress> pending = new HashMap<>();
+    private final HashMap<Integer, String> keyValueStore = new HashMap<>();
 
     //******* Handlers ******
     protected final ClassMatchedHandler<GetOperation, Message> getHandler = new ClassMatchedHandler<GetOperation, Message>() {
@@ -61,7 +66,50 @@ public class KVService extends ComponentDefinition {
         public void handle(GetOperation content, Message context) {
             LOG.info("Received a get request: " + content.key);
             pending.put(content.id, context.getSource());
-            trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
+            //trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
+            Propose p = new Propose(content.id, "GET", Integer.parseInt(content.key), null, null);
+            trigger(p, asc);
+        }
+    };
+
+    protected final ClassMatchedHandler<PutOperation, Message> putHandler = new ClassMatchedHandler<PutOperation, Message>() {
+
+        @Override
+        public void handle(PutOperation content, Message context) {
+            LOG.info("Got a put request: " + content.key + " " + " " + content.value);
+            pending.put(content.id, context.getSource());
+            //trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
+            Propose p = new Propose(content.id, "PUT", Integer.parseInt(content.key), content.value, null);
+            trigger(p, asc);
+        }
+    };
+
+    protected final ClassMatchedHandler<CASOperation, Message> casHandler = new ClassMatchedHandler<CASOperation, Message>() {
+
+        @Override
+        public void handle(CASOperation content, Message context) {
+            pending.put(content.id, context.getSource());
+            //trigger(new AR_CAS_Request(Integer.parseInt(content.key), content.referenceValue, content.newValue, content.id), atomicRegister);
+            Propose p = new Propose(content.id, "CAS", Integer.parseInt(content.key), content.newValue, content.referenceValue);
+            trigger(p, asc);
+        }
+    };
+
+    protected final Handler<ASCDecide> ascDecideHandler = new Handler<ASCDecide>() {
+        @Override
+        public void handle(ASCDecide ascDecide) {
+            String method = ascDecide.propose.method;
+            if (method.equals("GET")) {
+                LOG.info("Doing get!");
+            } else if (method.equals("PUT")) {
+                LOG.info("Doing put!");
+            } else if (method.equals("CAS")) {
+                LOG.info("Doing CAS");
+            }
+            UUID id = ascDecide.propose.uuid;
+            NetAddress src = pending.get(id);
+            pending.remove(id);
+            trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
         }
     };
 
@@ -81,16 +129,6 @@ public class KVService extends ComponentDefinition {
         }
     };
 
-    protected final ClassMatchedHandler<PutOperation, Message> putHandler = new ClassMatchedHandler<PutOperation, Message>() {
-
-        @Override
-        public void handle(PutOperation content, Message context) {
-            LOG.info("Got a put request: " + content.key + " " + " " + content.value);
-            pending.put(content.id, context.getSource());
-            trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
-        }
-    };
-
     protected final Handler<AR_Write_Response> writeResponseHandler = new Handler<AR_Write_Response>() {
 
         @Override
@@ -102,15 +140,6 @@ public class KVService extends ComponentDefinition {
         }
     };
 
-    protected final ClassMatchedHandler<CASOperation, Message> casHandler = new ClassMatchedHandler<CASOperation, Message>() {
-
-        @Override
-        public void handle(CASOperation content, Message context) {
-            pending.put(content.id, context.getSource());
-            trigger(new AR_CAS_Request(Integer.parseInt(content.key), content.referenceValue, content.newValue, content.id), atomicRegister);
-
-        }
-    };
 
     protected final Handler<AR_CAS_Response> casResponseHandler = new Handler<AR_CAS_Response>() {
 

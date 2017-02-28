@@ -1,13 +1,15 @@
 package se.kth.id2203;
 
 import com.google.common.base.Optional;
+import se.kth.id2203.Paxos.MultiPaxos;
+import se.kth.id2203.Paxos.Paxos;
 import se.kth.id2203.ReadWrite.ReadImposeWriteConsultMajority;
 import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.bootstrapping.BootstrapClient;
 import se.kth.id2203.bootstrapping.BootstrapServer;
 import se.kth.id2203.bootstrapping.Bootstrapping;
-import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.BasicBroadcast;
+import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.broadcasting.TestBroadcast;
 import se.kth.id2203.failuredetector.EPFD;
 import se.kth.id2203.failuredetector.EventuallyPerfectFailureDetector;
@@ -27,9 +29,11 @@ public class ParentComponent
     protected final Positive<Timer> timer = requires(Timer.class);
     protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
     protected final Positive<AtomicRegister> atomicRegisterPos = requires(AtomicRegister.class);
+    protected final Positive<Paxos> ascPos = requires(Paxos.class);
     //******* Children ******
     protected final Component overlay = create(VSOverlayManager.class, Init.NONE);
     protected final Component riwc = create(ReadImposeWriteConsultMajority.class, Init.NONE);
+    protected final Component multipaxos = create(MultiPaxos.class, Init.NONE);
     protected final Component kv = create(KVService.class, Init.NONE);
     protected final Component basicbroadcast = create(BasicBroadcast.class, Init.NONE);
     protected final Component testBroadcast = create(TestBroadcast.class, Init.NONE);
@@ -51,11 +55,13 @@ public class ParentComponent
         connect(boot.getPositive(Bootstrapping.class), overlay.getNegative(Bootstrapping.class), Channel.TWO_WAY);
         connect(net, overlay.getNegative(Network.class), Channel.TWO_WAY);
         connect(beb, overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
-        connect(atomicRegisterPos, kv.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
+        connect(atomicRegisterPos, overlay.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
+        connect(ascPos, overlay.getNegative(Paxos.class),  Channel.TWO_WAY);
         // KV
         connect(overlay.getPositive(Routing.class), kv.getNegative(Routing.class), Channel.TWO_WAY);
         connect(net, kv.getNegative(Network.class), Channel.TWO_WAY);
         connect(atomicRegisterPos, kv.getNegative(AtomicRegister.class),  Channel.TWO_WAY);
+        connect(ascPos, kv.getNegative(Paxos.class),  Channel.TWO_WAY);
         //BB
         connect(basicbroadcast.getPositive(BestEffortBroadcast.class), overlay.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
         connect(basicbroadcast.getPositive(BestEffortBroadcast.class), riwc.getNegative(BestEffortBroadcast.class), Channel.TWO_WAY);
@@ -64,6 +70,10 @@ public class ParentComponent
         connect(riwc.getPositive(AtomicRegister.class), kv.getNegative(AtomicRegister.class), Channel.TWO_WAY);
         connect(riwc.getPositive(AtomicRegister.class), overlay.getNegative(AtomicRegister.class), Channel.TWO_WAY);
         connect(net, riwc.getNegative(Network.class), Channel.TWO_WAY);
+        //Multi Paxos
+        connect(multipaxos.getPositive(Paxos.class), kv.getNegative(Paxos.class), Channel.TWO_WAY);
+        connect(multipaxos.getPositive(Paxos.class), overlay.getNegative(Paxos.class), Channel.TWO_WAY);
+        connect(net, multipaxos.getNegative(Network.class), Channel.TWO_WAY);
         //EPFD
         connect(epfd.getPositive(EventuallyPerfectFailureDetector.class), overlay.getNegative(EventuallyPerfectFailureDetector.class), Channel.TWO_WAY);
         connect(timer, epfd.getNegative(Timer.class), Channel.TWO_WAY);

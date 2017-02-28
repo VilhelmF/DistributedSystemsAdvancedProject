@@ -26,6 +26,7 @@ package se.kth.id2203.overlay;
 import com.larskroll.common.J6;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import se.kth.id2203.Paxos.Paxos;
 import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.bootstrapping.Booted;
 import se.kth.id2203.bootstrapping.Bootstrapping;
@@ -68,6 +69,7 @@ public class VSOverlayManager extends ComponentDefinition {
     protected final Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
     protected final Positive<CausalOrderReliableBroadcast> crb = requires(CausalOrderReliableBroadcast.class);
     protected final Positive<AtomicRegister> ar = requires(AtomicRegister.class);
+    protected final Positive<Paxos> asc = requires(Paxos.class);
 
 
 
@@ -114,6 +116,7 @@ public class VSOverlayManager extends ComponentDefinition {
                 LOG.info(self + ": The topolgy I'm sending - " + partition.toString());
                 trigger(new TopologyMessage(partition), beb);
                 trigger(new StartMessage(failureTopology), epfd);
+                trigger(new StartMessage(partition), asc);
                 LOG.info(partition.toString());
             } else {
                 LOG.error("Got invalid NodeAssignment type. Expected: LookupTable; Got: {}", event.assignment.getClass());

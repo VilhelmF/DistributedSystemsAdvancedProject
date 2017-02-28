@@ -1,5 +1,6 @@
 package se.kth.id2203.simulation.broadcast;
 
+import se.kth.id2203.broadcasting.BasicBroadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Network;
