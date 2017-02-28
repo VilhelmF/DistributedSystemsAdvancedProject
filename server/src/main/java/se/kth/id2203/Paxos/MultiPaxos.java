@@ -150,6 +150,7 @@ public class MultiPaxos extends ComponentDefinition {
         @Override
         public void handle(Propose propose) {
             // TODO:  What is in the propose message?
+            LOG.info("Starting propose!!!");
             LOG.info(propose.toString());
             LOG.info(propose.method + " : " + propose.key);
             t++;
@@ -228,6 +229,7 @@ public class MultiPaxos extends ComponentDefinition {
             t = Integer.max(t, nack.t) + 1;
             if (nack.pts == pts) {
                 pts = 0;
+                LOG.info("ABORTING THIS - SENDING TO ASC");
                 trigger(new Abort(nack.id), asc);
             }
         }

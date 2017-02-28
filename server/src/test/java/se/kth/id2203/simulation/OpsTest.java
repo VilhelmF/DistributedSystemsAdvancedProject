@@ -27,7 +27,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.simulation.epfd.EPDFScenarioGen;
 import se.sics.kompics.simulator.SimulationScenario;
 import se.sics.kompics.simulator.run.LauncherComp;
 
@@ -37,7 +36,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
 
-    private static final int NUM_MESSAGES = 100;
+    private static final int NUM_MESSAGES = 1;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
@@ -59,7 +58,7 @@ public class OpsTest {
     public void simplePutTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {

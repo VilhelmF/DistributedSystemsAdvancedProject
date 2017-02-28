@@ -78,6 +78,7 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(PutOperation content, Message context) {
             LOG.info("Got a put request: " + content.key + " " + " " + content.value);
+            LOG.info("ID is : " + content.id);
             pending.put(content.id, context.getSource());
             //trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
             Propose p = new Propose(content.id, "PUT", Integer.parseInt(content.key), content.value, null);
@@ -110,6 +111,7 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(ASCDecide ascDecide) {
             UUID id = ascDecide.propose.uuid;
+            LOG.info("Sending back reply for: " + id);
             NetAddress src = pending.get(id);
             String method = ascDecide.propose.method;
             int key = ascDecide.propose.key;
@@ -178,6 +180,7 @@ public class KVService extends ComponentDefinition {
 
 
     {
+        subscribe(abortHandler, asc);
         subscribe(getHandler, net);
         subscribe(putHandler, net);
         subscribe(casHandler, net);
