@@ -171,7 +171,7 @@ public class MultiPaxos extends ComponentDefinition {
                     accepted.put(address, 0);
                     decided.put(address, 0);
                     LOG.info("Sending Prepare to : " + address);
-                    trigger(new Message(self, address, new Prepare(pts, al, t)), net);
+                    trigger(new Message(self, address, new Prepare(pts, al, t, propose.uuid)), net);
                 }
             }
             else if (readlist.size() <= N / 2) {
@@ -195,7 +195,7 @@ public class MultiPaxos extends ComponentDefinition {
                     if(readlist.containsKey(na)) {
                         List<Propose> tempProposeList = new ArrayList<>();
                         tempProposeList.add(propose);
-                        trigger(new Message(self, na, new Accept(pts, tempProposeList, pv.size() - 1, t)), net);
+                        trigger(new Message(self, na, new Accept(pts, tempProposeList, pv.size() - 1, t, propose.uuid)), net);
                     }
                 }
             }
@@ -211,11 +211,11 @@ public class MultiPaxos extends ComponentDefinition {
             t = Integer.max(t, prepare.t2) + 1;
             if (prepare.ts < prepts) {
                 LOG.info("Sending NACK to : " + context.getSource());
-                trigger(new Message(self, context.getSource(), new Nack(prepare.ts, t)), net);
+                trigger(new Message(self, context.getSource(), new Nack(prepare.ts, t, prepare.proposeUUID)), net);
             } else {
                 prepts = prepare.ts;
                 LOG.info("Sending PrepareACK to : " + context.getSource());
-                trigger(new Message(self, context.getSource(), new PrepareAck(prepare.ts, ats, getSuffix(av, prepare.l), al, t)), net);
+                trigger(new Message(self, context.getSource(), new PrepareAck(prepare.ts, ats, getSuffix(av, prepare.l), al, t, prepare.proposeUUID)), net);
             }
         }
     };
@@ -228,7 +228,7 @@ public class MultiPaxos extends ComponentDefinition {
             t = Integer.max(t, nack.t) + 1;
             if (nack.pts == pts) {
                 pts = 0;
-                trigger(new Abort(), asc);
+                trigger(new Abort(nack.id), asc);
             }
         }
     };
@@ -261,11 +261,11 @@ public class MultiPaxos extends ComponentDefinition {
                         if(readlist.get(address) != null) {
                             Integer tempL = decided.get(address);
                             List<Propose> tempSuffix = getSuffix(pv, tempL);
-                            trigger(new Message(self, address, new Accept(pts, tempSuffix, tempL, t)), net);
+                            trigger(new Message(self, address, new Accept(pts, tempSuffix, tempL, t, prepareAck.id)), net);
                         }
                     }
                 } else if (readlist.size() > ((N/2) + 1)) {
-                    trigger(new Message(self, context.getSource(), new Accept(pts, getSuffix(pv, prepareAck.l), prepareAck.l, t)), net);
+                    trigger(new Message(self, context.getSource(), new Accept(pts, getSuffix(pv, prepareAck.l), prepareAck.l, t, prepareAck.id)), net);
                     if (pl != 0) {
                         trigger(new Message(self, context.getSource(), new Decide(pts, pl, t)), net);
                     }
@@ -280,7 +280,7 @@ public class MultiPaxos extends ComponentDefinition {
         public void handle(Accept accept, Message context) {
             t = Integer.max(t, accept.t) + 1;
             if (accept.pts != prepts) {
-                trigger(new Message(self, context.getSource(), new Nack(accept.pts, t)), net);
+                trigger(new Message(self, context.getSource(), new Nack(accept.pts, t, accept.id)), net);
             }
             else {
                 ats = accept.pts;

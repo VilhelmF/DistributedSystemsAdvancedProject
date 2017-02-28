@@ -26,6 +26,7 @@ package se.kth.id2203.kvstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.kth.id2203.Paxos.ASCDecide;
+import se.kth.id2203.Paxos.Abort;
 import se.kth.id2203.Paxos.Paxos;
 import se.kth.id2203.Paxos.Propose;
 import se.kth.id2203.atomicregister.*;
@@ -95,27 +96,43 @@ public class KVService extends ComponentDefinition {
         }
     };
 
+    protected  final Handler<Abort> abortHandler = new Handler<Abort>() {
+        @Override
+        public void handle(Abort abort) {
+            NetAddress src = pending.get(abort.id);
+            pending.remove(abort.id);
+            trigger(new Message(self, src, new OpResponse(abort.id, "ABORT", Code.NOT_IMPLEMENTED)), net);
+        }
+    };
+
     protected final Handler<ASCDecide> ascDecideHandler = new Handler<ASCDecide>() {
         @Override
         public void handle(ASCDecide ascDecide) {
             UUID id = ascDecide.propose.uuid;
             NetAddress src = pending.get(id);
-            pending.remove(id);
             String method = ascDecide.propose.method;
             int key = ascDecide.propose.key;
             if (method.equals("GET")) {
                 LOG.info("Doing get!");
                 String value = keyValueStore.get(key);
-                trigger(new Message(self, src, new OpResponse(id, value, Code.OK)), net);
+                if(src != null) {
+                    pending.remove(id);
+                    trigger(new Message(self, src, new OpResponse(id, value, Code.OK)), net);
+                }
             } else if (method.equals("PUT")) {
                 LOG.info("Doing put!");
                 keyValueStore.put(key, ascDecide.propose.value);
-                trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+                if(src != null) {
+                    pending.remove(id);
+                    trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+                }
             } else if (method.equals("CAS")) {
                 LOG.info("Doing CAS");
                 keyValueStore.put(key, ascDecide.propose.value);
-                LOG.info("Doing CAS");
-                trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+                if(src != null) {
+                    pending.remove(id);
+                    trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+                }
             }
         }
     };
