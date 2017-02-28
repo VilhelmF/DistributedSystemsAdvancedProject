@@ -10,17 +10,17 @@ import java.util.List;
  */
 public class PrepareAck implements KompicsEvent, Serializable {
 
+    public final int pts2;
     public final int ts;
-    public final int ats;
-    public final List<Object> values;
-    public final int al;
-    public final int t;
+    public final List<Object> vsuf;
+    public final int l;
+    public final int t2;
 
     public PrepareAck(int ts, int ats, List<Object> values, int al, int t) {
-        this.ts = ts;
-        this.ats = ats;
-        this.values = values;
-        this.al = al;
-        this.t = t;
+        this.pts2 = ts;
+        this.ts = ats;
+        this.vsuf = values;
+        this.l = al;
+        this.t2 = t;
     }
 }

@@ -9,13 +9,15 @@ import java.io.Serializable;
  */
 public class Prepare implements KompicsEvent, Serializable {
 
-    public final int pts;
-    public final int al;
-    public final int t;
+    public final int key;
+    public final int ts;
+    public final int l;
+    public final int t2;
 
-    public Prepare(int pts, int al, int t) {
-        this.pts = pts;
-        this.al = al;
-        this.t = t;
+    public Prepare(int key, int pts, int al, int t) {
+        this.key = key;
+        this.ts = pts;
+        this.l = al;
+        this.t2 = t;
     }
 }

@@ -29,6 +29,7 @@ public class MultiPaxos2 extends ComponentDefinition {
     public NavigableSet<NetAddress> topology;
     public int N;
     private int t;                                          //Logical clock.
+    /*
     private int prepts;                                     //Acceptor: Prepared timestamp.
     private int ats;                                        //Acceptor: Timestamp.
     private List<Object> av;                                //Acceptor: Accepted sequence.
@@ -40,6 +41,7 @@ public class MultiPaxos2 extends ComponentDefinition {
     private HashMap<Address, PaxosReadlistValue> readlist;
     private HashMap<Address, Integer> accepted;             //Proposer's knowledge about length of acceptor's longest seq num.
     private HashMap<Address, Integer> decided;              //Proposer's knowledge about length of acceptor's longest decided seq.
+    */
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
 
 
@@ -51,6 +53,7 @@ public class MultiPaxos2 extends ComponentDefinition {
         this.N = 3; // TODO assign proper N
 
         this.t = init.t;
+        /*
         this.prepts = init.prepts;
 
         this.ats = init.ats;
@@ -65,6 +68,7 @@ public class MultiPaxos2 extends ComponentDefinition {
         this.readlist = init.readlist;
         this.accepted = init.accepted;
         this.decided = init.decided;
+        */
 
         subscribe(proposeHandler, asc);
         subscribe(prepareHandler, net);
@@ -82,6 +86,7 @@ public class MultiPaxos2 extends ComponentDefinition {
         public List<NetAddress> topology;
         public int N;
         public int t;
+        /*
         public int prepts;
         public int ats;
         public List<Object> av;
@@ -93,9 +98,11 @@ public class MultiPaxos2 extends ComponentDefinition {
         public HashMap<Address, PaxosReadlistValue> readlist;
         public HashMap<Address, Integer> accepted;
         public HashMap<Address, Integer> decided;
+        */
 
         public Init() {
             this.t = 0;
+            /*
             this.prepts = 0;
             this.ats = 0;
             this.av = new ArrayList<>();
@@ -108,6 +115,7 @@ public class MultiPaxos2 extends ComponentDefinition {
             this.readlist = new HashMap<>();
             this.accepted = new HashMap<>();
             this.decided = new HashMap<>();
+            */
 
         }
     }
@@ -120,6 +128,7 @@ public class MultiPaxos2 extends ComponentDefinition {
 
             // Not fully sure where to handle initialization.
             t = 0;
+            /*
             prepts = 0;
             ats = 0;
             av = new ArrayList<>();
@@ -132,15 +141,18 @@ public class MultiPaxos2 extends ComponentDefinition {
             readlist = new HashMap<>();
             accepted = new HashMap<>();
             decided = new HashMap<>();
+            */
 
             paxosEntryHashMap = new HashMap<>();
 
+
             topology = startMessage.topology;
             N = topology.size();
+            /*
             for (NetAddress na : topology) {
                 accepted.put(na, 0);
                 decided.put(na, 0);
-            }
+            }*/
         }
     };
 
@@ -158,7 +170,7 @@ public class MultiPaxos2 extends ComponentDefinition {
 
             if (paxosEntry.pts == 0) {
                 paxosEntry.pts = (t * paxosEntry.readlist.size()) + selfRank();
-                paxosEntry.pv = getPrefix(av, al);
+                paxosEntry.pv = getPrefix(paxosEntry.av, paxosEntry.al);
                 paxosEntry.pl = 0;
                 //proposedValues = propose.values;
                 paxosEntry.proposedValues = new ArrayList<>();
@@ -171,7 +183,7 @@ public class MultiPaxos2 extends ComponentDefinition {
                 paxosEntry.accepted.clear();
                 paxosEntry.decided.clear();
                 for (NetAddress address : topology) {
-                    trigger(new Message(self, address, new Prepare(paxosEntry.pts, paxosEntry.al, t)), net);
+                    trigger(new Message(self, address, new Prepare(key, paxosEntry.pts, paxosEntry.al, t)), net);
                 }
             }
             else if (paxosEntry.readlist.size() <= N / 2) {
@@ -193,7 +205,7 @@ public class MultiPaxos2 extends ComponentDefinition {
                 paxosEntry.pv.add(value);
                 for (NetAddress address : paxosEntry.readlist.keySet()) {
                     // TODO Handle value
-                    trigger(new Message(self, address, new Accept(paxosEntry.pts, propose.values, paxosEntry.pv.size() - 1, t)), net);
+                    trigger(new Message(self, address, new Accept(key, paxosEntry.pts, propose.values, paxosEntry.pv.size() - 1, t)), net);
                 }
 
             }
@@ -204,12 +216,14 @@ public class MultiPaxos2 extends ComponentDefinition {
 
         @Override
         public void handle(Prepare prepare, Message context) {
-            t = Integer.max(t, prepare.t) + 1;
-            if (prepare.pts < prepts) {
-                trigger(new Message(self, context.getSource(), new Nack(prepare.pts, t)), net);
+            t = Integer.max(t, prepare.t2) + 1;
+            PaxosEntry paxosEntry = paxosEntryHashMap.get(prepare.key);
+            if (prepare.ts < paxosEntry.prepts) {
+                trigger(new Message(self, context.getSource(), new Nack(prepare.ts, t)), net);
             } else {
-                prepts = prepare.pts;
-                trigger(new Message(self, context.getSource(), new PrepareAck(prepare.pts, ats, getSuffix(av, prepare.al), al, t)), net);
+                paxosEntry.prepts = prepare.ts;
+                paxosEntryHashMap.put(prepare.key, paxosEntry);
+                trigger(new Message(self, context.getSource(), new PrepareAck(prepare.ts, paxosEntry.ats, getSuffix(paxosEntry.av, prepare.l), paxosEntry.al, t)), net);
             }
         }
     };

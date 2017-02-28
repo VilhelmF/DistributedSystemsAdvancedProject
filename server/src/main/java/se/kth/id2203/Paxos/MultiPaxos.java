@@ -143,6 +143,7 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Propose propose, Message context) {
+            // TODO:  What is in the propose message?
             t++;
             if (pts == 0) {
                 pts = (t * readlist.size()) + selfRank();
@@ -151,7 +152,7 @@ public class MultiPaxos extends ComponentDefinition {
                 //proposedValues = propose.values;
                 proposedValues = new ArrayList<>();
                 //TODO create value message.
-                proposedValues.add(value);
+                proposedValues.add(propose);
                 //TODO Hashmaps with topology. Readlist empty, accepted decided with 0 for each node.
                 readlist.clear();
                 accepted.clear();
@@ -161,7 +162,7 @@ public class MultiPaxos extends ComponentDefinition {
                 }
             }
             else if (readlist.size() <= N / 2) {
-                proposedValues.add(value);
+                proposedValues.add(propose);
                 /*for (Object obj : propose.values) {
                     proposedValues.add(obj);
                 }*/
@@ -189,12 +190,12 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Prepare prepare, Message context) {
-            t = Integer.max(t, prepare.t) + 1;
-            if (prepare.pts < prepts) {
-                trigger(new Message(self, context.getSource(), new Nack(prepare.pts, t)), net);
+            t = Integer.max(t, prepare.t2) + 1;
+            if (prepare.ts < prepts) {
+                trigger(new Message(self, context.getSource(), new Nack(prepare.ts, t)), net);
             } else {
-                prepts = prepare.pts;
-                trigger(new Message(self, context.getSource(), new PrepareAck(prepare.pts, ats, getSuffix(av, prepare.al), al, t)), net);
+                prepts = prepare.ts;
+                trigger(new Message(self, context.getSource(), new PrepareAck(prepare.ts, ats, getSuffix(av, prepare.l), al, t)), net);
             }
         }
     };
@@ -215,10 +216,10 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(PrepareAck prepareAck, Message context) {
-            t = Integer.max(t, prepareAck.t) + 1;
-            if (prepareAck.ats == pts); {
-                readlist.put(context.getSource(), new PaxosReadlistValue(prepareAck.ts, prepareAck.values));
-                decided.put(context.getSource(), prepareAck.al);
+            t = Integer.max(t, prepareAck.t2) + 1;
+            if (prepareAck.pts2 == pts); {
+                readlist.put(context.getSource(), new PaxosReadlistValue(prepareAck.ts, prepareAck.vsuf));
+                decided.put(context.getSource(), prepareAck.l);
                 if (readlist.size() == ((N / 2) + 1)) {
                     int tsTemp = 0;
                     List<Object> vsufTemp = new ArrayList<>();
@@ -229,18 +230,20 @@ public class MultiPaxos extends ComponentDefinition {
                         }
                     }
                     pv.add(vsufTemp);
-                    for (Value value : proposedValues) {
+                    for (Object value : proposedValues) {
                         if (!pv.contains(value)) {
                            pv.add(value);
                         }
                     }
                     for (NetAddress address : topology) {
-                        Integer tempL = decided.get(address);
-                        List<Object> tempSuffix = getSuffix(pv, tempL);
-                        trigger(new Message(self, address, new Accept(pts, tempSuffix, tempL, t)), net);
+                        if(readlist.get(address) != null) {
+                            Integer tempL = decided.get(address);
+                            List<Object> tempSuffix = getSuffix(pv, tempL);
+                            trigger(new Message(self, address, new Accept(pts, tempSuffix, tempL, t)), net);
+                        }
                     }
                 } else if (readlist.size() > ((N/2) + 1)) {
-                    trigger(new Message(self, context.getSource(), new Accept(pts, getSuffix(pv, prepareAck.al), al, t)), net);
+                    trigger(new Message(self, context.getSource(), new Accept(pts, getSuffix(pv, prepareAck.l), prepareAck.l, t)), net);
                     if (pl != 0) {
                         trigger(new Message(self, context.getSource(), new Decide(pts, pl, t)), net);
                     }

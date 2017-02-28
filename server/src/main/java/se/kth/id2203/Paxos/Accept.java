@@ -9,6 +9,7 @@ import java.util.List;
  * Created by sindrikaldal on 27/02/17.
  */
 public class Accept implements KompicsEvent, Serializable {
+
     public final int pts;
     public final List<Object> values;
     public final int pvLength;
