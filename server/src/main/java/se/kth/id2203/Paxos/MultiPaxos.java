@@ -143,10 +143,10 @@ public class MultiPaxos extends ComponentDefinition {
         }
     };
 
-    protected final ClassMatchedHandler<Propose, Message> proposeHandler = new ClassMatchedHandler<Propose, Message>() {
+    protected final Handler<Propose> proposeHandler = new Handler<Propose>() {
 
         @Override
-        public void handle(Propose propose, Message context) {
+        public void handle(Propose propose) {
             // TODO:  What is in the propose message?
             LOG.info(propose.toString());
             t++;
@@ -272,7 +272,7 @@ public class MultiPaxos extends ComponentDefinition {
                 if (accept.pvLength < av.size()) {
                     av = getPrefix(av, accept.pvLength);
                 }
-                av.add((Propose) accept.values);
+                av.addAll(accept.values);
                 trigger(new Message(self, context.getSource(), new AcceptAck(accept.pts, av.size(), t)), net);
             }
         }
