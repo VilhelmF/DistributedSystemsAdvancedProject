@@ -164,32 +164,20 @@ public class MultiPaxos extends ComponentDefinition {
                 //TODO create value message.
                 proposedValues.add(propose);
                 //TODO Hashmaps with topology. Readlist empty, accepted decided with 0 for each node.
-                readlist.clear();
-                accepted.clear();
-                decided.clear();
+                readlist = new HashMap<>();
+                accepted = new HashMap<>();
+                decided = new HashMap<>();
 
                 for (NetAddress address : topology) {
                     accepted.put(address, 0);
                     decided.put(address, 0);
-                    LOG.info("Sending Prepare to : " + address);
+                    LOG.info("Sending Prepare at " + self.toString() + " to : " + address);
                     trigger(new Message(self, address, new Prepare(pts, al, t, propose.uuid)), net);
                 }
             }
             else if (readlist.size() <= N / 2) {
                 proposedValues.add(propose);
-                /*for (Object obj : propose.values) {
-                    proposedValues.add(obj);
-                }*/
             }
-            /*
-            else if (!pv.equals(propose.values)) {
-                for (Object obj : propose.values) {
-                    pv.add(obj);
-                }
-                for (NetAddress address : topology) {
-                    trigger(new Message(self, address, new Accept(pts, propose.values, pv.size() - 1, t)), net);
-                }
-            }*/
             else if (!pv.contains(propose)) {
                 pv.add(propose);
                 for(NetAddress na : topology) {
@@ -225,9 +213,10 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Nack nack, Message context) {
-            LOG.info("Received NACK from : " + context.getSource());
+            LOG.info("Received NACK at : " + self.toString() + " from : " + context.getSource());
             t = Integer.max(t, nack.t) + 1;
             if (nack.pts == pts) {
+                LOG.info("Aborted at : " + self.toString());
                 pts = 0;
                 LOG.info("ABORTING THIS - SENDING TO ASC");
                 trigger(new Abort(nack.id), asc);
@@ -361,7 +350,7 @@ public class MultiPaxos extends ComponentDefinition {
     }
 
     public int selfRank() {
-        return self.getIp().hashCode();
+        return Math.abs(self.getIp().hashCode());
     }
 
 }

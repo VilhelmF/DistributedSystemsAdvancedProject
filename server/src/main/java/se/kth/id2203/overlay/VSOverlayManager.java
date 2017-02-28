@@ -127,14 +127,8 @@ public class VSOverlayManager extends ComponentDefinition {
 
         @Override
         public void handle(RouteMsg content, Message context) {
-            //int i_key = Integer.parseInt(content.key);
             Collection<NetAddress> partition = lut.get(content.key);
             NetAddress target = J6.randomElement(partition);
-            // Hvað er að frétta með etta NavigableSet?
-            for(NetAddress na : partition) {
-                // Þangað til ég finn út hvernig ég tek út úr þessu fjandans setti
-                target = na;
-            }
             LOG.info("Broadcasting message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);
             //trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
