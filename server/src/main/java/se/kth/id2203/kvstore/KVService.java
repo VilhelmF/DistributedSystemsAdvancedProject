@@ -98,18 +98,25 @@ public class KVService extends ComponentDefinition {
     protected final Handler<ASCDecide> ascDecideHandler = new Handler<ASCDecide>() {
         @Override
         public void handle(ASCDecide ascDecide) {
-            String method = ascDecide.propose.method;
-            if (method.equals("GET")) {
-                LOG.info("Doing get!");
-            } else if (method.equals("PUT")) {
-                LOG.info("Doing put!");
-            } else if (method.equals("CAS")) {
-                LOG.info("Doing CAS");
-            }
             UUID id = ascDecide.propose.uuid;
             NetAddress src = pending.get(id);
             pending.remove(id);
-            trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+            String method = ascDecide.propose.method;
+            int key = ascDecide.propose.key;
+            if (method.equals("GET")) {
+                LOG.info("Doing get!");
+                String value = keyValueStore.get(key);
+                trigger(new Message(self, src, new OpResponse(id, value, Code.OK)), net);
+            } else if (method.equals("PUT")) {
+                LOG.info("Doing put!");
+                keyValueStore.put(key, ascDecide.propose.value);
+                trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+            } else if (method.equals("CAS")) {
+                LOG.info("Doing CAS");
+                keyValueStore.put(key, ascDecide.propose.value);
+                LOG.info("Doing CAS");
+                trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+            }
         }
     };
 
@@ -151,10 +158,12 @@ public class KVService extends ComponentDefinition {
         }
     };
 
+
     {
         subscribe(getHandler, net);
         subscribe(putHandler, net);
         subscribe(casHandler, net);
+        subscribe(ascDecideHandler, asc);
         subscribe(readResponseHandler, atomicRegister);
         subscribe(writeResponseHandler, atomicRegister);
         subscribe(casResponseHandler, atomicRegister);

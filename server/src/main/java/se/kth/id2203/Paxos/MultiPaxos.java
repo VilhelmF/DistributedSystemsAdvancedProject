@@ -140,6 +140,8 @@ public class MultiPaxos extends ComponentDefinition {
                accepted.put(na, 0);
                decided.put(na, 0);
             }
+
+            LOG.info("Paxos initialization finished");
         }
     };
 
@@ -149,8 +151,10 @@ public class MultiPaxos extends ComponentDefinition {
         public void handle(Propose propose) {
             // TODO:  What is in the propose message?
             LOG.info(propose.toString());
+            LOG.info(propose.method + " : " + propose.key);
             t++;
             if (pts == 0) {
+                LOG.info("pts == 0");
                 pts = (t * readlist.size()) + selfRank();
                 pv = getPrefix(av, al);
                 pl = 0;
@@ -162,7 +166,11 @@ public class MultiPaxos extends ComponentDefinition {
                 readlist.clear();
                 accepted.clear();
                 decided.clear();
+
                 for (NetAddress address : topology) {
+                    accepted.put(address, 0);
+                    decided.put(address, 0);
+                    LOG.info("Sending Prepare to : " + address);
                     trigger(new Message(self, address, new Prepare(pts, al, t)), net);
                 }
             }
@@ -183,12 +191,13 @@ public class MultiPaxos extends ComponentDefinition {
             }*/
             else if (!pv.contains(propose)) {
                 pv.add(propose);
-                for (Address address : readlist.keySet()) {
-                    List<Propose> tempProposeList = new ArrayList<>();
-                    tempProposeList.add(propose);
-                    trigger(new Message(self, (NetAddress) address, new Accept(pts, tempProposeList, pv.size() - 1, t)), net);
+                for(NetAddress na : topology) {
+                    if(readlist.containsKey(na)) {
+                        List<Propose> tempProposeList = new ArrayList<>();
+                        tempProposeList.add(propose);
+                        trigger(new Message(self, na, new Accept(pts, tempProposeList, pv.size() - 1, t)), net);
+                    }
                 }
-
             }
         }
     };
@@ -197,11 +206,15 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Prepare prepare, Message context) {
+            LOG.info("Received Prepare from : " + context.getSource());
+            LOG.info(prepare.toString());
             t = Integer.max(t, prepare.t2) + 1;
             if (prepare.ts < prepts) {
+                LOG.info("Sending NACK to : " + context.getSource());
                 trigger(new Message(self, context.getSource(), new Nack(prepare.ts, t)), net);
             } else {
                 prepts = prepare.ts;
+                LOG.info("Sending PrepareACK to : " + context.getSource());
                 trigger(new Message(self, context.getSource(), new PrepareAck(prepare.ts, ats, getSuffix(av, prepare.l), al, t)), net);
             }
         }
@@ -211,6 +224,7 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Nack nack, Message context) {
+            LOG.info("Received NACK from : " + context.getSource());
             t = Integer.max(t, nack.t) + 1;
             if (nack.pts == pts) {
                 pts = 0;
@@ -224,6 +238,7 @@ public class MultiPaxos extends ComponentDefinition {
         @Override
         public void handle(PrepareAck prepareAck, Message context) {
             t = Integer.max(t, prepareAck.t2) + 1;
+            LOG.info("Received PrepareACK from : " + context.getSource());
             if (prepareAck.pts2 == pts); {
                 readlist.put(context.getSource(), new PaxosReadlistValue(prepareAck.ts, prepareAck.vsuf));
                 decided.put(context.getSource(), prepareAck.l);
@@ -344,7 +359,7 @@ public class MultiPaxos extends ComponentDefinition {
     }
 
     public int selfRank() {
-        return self.getPort();
+        return self.getIp().hashCode();
     }
 
 }
