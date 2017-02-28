@@ -37,7 +37,7 @@ public class MultiPaxos extends ComponentDefinition {
     private List<Propose> pv;                                //Proposer: Proposed seq.
     private int pl;                                         //Proposer: Length of learned seq.
     private List<Propose> proposedValues;                    //Proposer: Values proposed while preparing.
-    private HashMap<Address, PaxosReadlistValue> readlist;
+    private HashMap<NetAddress, PaxosReadlistValue> readlist;
     private HashMap<Address, Integer> accepted;             //Proposer's knowledge about length of acceptor's longest seq num.
     private HashMap<Address, Integer> decided;              //Proposer's knowledge about length of acceptor's longest decided seq.
     final NetAddress self = config().getValue("id2203.project.address", NetAddress.class);
@@ -176,12 +176,16 @@ public class MultiPaxos extends ComponentDefinition {
                 }
             }
             else if (readlist.size() <= N / 2) {
+                LOG.info("readlist.size() <= N");
                 proposedValues.add(propose);
             }
             else if (!pv.contains(propose)) {
+                LOG.info("!pv.contains(propose)");
                 pv.add(propose);
                 for(NetAddress na : topology) {
+                    LOG.info("Should I send to na?  " + na);
                     if(readlist.containsKey(na)) {
+                        LOG.info("Yes, sending to :" + na);
                         List<Propose> tempProposeList = new ArrayList<>();
                         tempProposeList.add(propose);
                         trigger(new Message(self, na, new Accept(pts, tempProposeList, pv.size() - 1, t, propose.uuid)), net);
@@ -199,6 +203,7 @@ public class MultiPaxos extends ComponentDefinition {
             LOG.info(prepare.toString());
             t = Integer.max(t, prepare.t2) + 1;
             if (prepare.ts < prepts) {
+                LOG.info("Prepare.ts : " + prepare.ts + "  Prepts: " + prepts);
                 LOG.info("Sending NACK to : " + context.getSource());
                 trigger(new Message(self, context.getSource(), new Nack(prepare.ts, t, prepare.proposeUUID)), net);
             } else {
@@ -269,17 +274,20 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Accept accept, Message context) {
-            t = Integer.max(t, accept.t) + 1;
-            if (accept.pts != prepts) {
-                trigger(new Message(self, context.getSource(), new Nack(accept.pts, t, accept.id)), net);
+            LOG.info("Received this glorious ACCEPT from " + context.getSource());
+            t = Integer.max(t, accept.t2) + 1;
+            if (accept.ts != prepts) {
+                LOG.info("Sending nack because     accept.pts != prepts");
+                trigger(new Message(self, context.getSource(), new Nack(accept.ts, t, accept.id)), net);
             }
             else {
-                ats = accept.pts;
-                if (accept.pvLength < av.size()) {
-                    av = getPrefix(av, accept.pvLength);
+                LOG.info("After glorious accept");
+                ats = accept.ts;
+                if (accept.offs < av.size()) {
+                    av = getPrefix(av, accept.offs);
                 }
-                av.addAll(accept.values);
-                trigger(new Message(self, context.getSource(), new AcceptAck(accept.pts, av.size(), t)), net);
+                av.addAll(accept.vsuf);
+                trigger(new Message(self, context.getSource(), new AcceptAck(accept.ts, av.size(), t)), net);
             }
         }
     };
@@ -288,8 +296,10 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(AcceptAck acceptAck, Message context) {
+            LOG.info("Received a lovely ACCEPTACK from " + context.getSource());
             t = Integer.max(t, acceptAck.t) + 1;
             if (acceptAck.pts == pts) {
+                LOG.info("acceptAck.pts == pts");
                 accepted.put(context.getSource(), acceptAck.l);
                 List<Integer> tempList = new ArrayList<>();
 
@@ -299,9 +309,11 @@ public class MultiPaxos extends ComponentDefinition {
                     }
                 }
                 if (pl < acceptAck.l || tempList.size() > N / 2) {
+                    LOG.info("pl < acceptAck.l || templist.size() > N / 2");
                     pl = acceptAck.l;
-                    for (Address address : readlist.keySet()) {
-                        trigger(new Message(self, (NetAddress) address, new Decide(pts, pl, t)), net);
+                    for (NetAddress address : readlist.keySet()) {
+                        LOG.info("Sending DECIDE to " + address);
+                        trigger(new Message(self, address, new Decide(pts, pl, t)), net);
                     }
                 }
             }
@@ -312,9 +324,13 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Decide decide, Message context) {
+            LOG.info("Received this awesome decide from : " + context.getSource());
             t = Integer.max(t, decide.t) + 1;
+            LOG.info("decide.ts = " + decide.ts + " prepts:  " + prepts);
             if (decide.ts == prepts) {
+                LOG.info("decide.ts == prepts");
                 while (al < decide.l) {
+                    LOG.info("Sending ASCDecide   al: " + al + "   decide.l: " + decide.l);
                     trigger(new ASCDecide(av.get(al)), asc);
                     al++;
                 }

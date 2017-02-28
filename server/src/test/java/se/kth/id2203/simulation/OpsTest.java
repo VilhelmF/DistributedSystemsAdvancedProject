@@ -36,7 +36,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
 
-    private static final int NUM_MESSAGES = 1;
+    private static final int NUM_MESSAGES = 10;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 

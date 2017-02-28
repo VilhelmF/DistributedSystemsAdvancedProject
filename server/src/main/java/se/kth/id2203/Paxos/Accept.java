@@ -11,17 +11,17 @@ import java.util.UUID;
  */
 public class Accept implements KompicsEvent, Serializable {
 
-    public final int pts;
-    public final List<Propose> values;
-    public final int pvLength;
-    public final int t;
+    public final int ts;
+    public final List<Propose> vsuf;
+    public final int offs;
+    public final int t2;
     public final UUID id;
 
     public Accept(int pts, List<Propose> values, int pvLength, int t, UUID id) {
-        this.pts = pts;
-        this.values = values;
-        this.pvLength = pvLength;
-        this.t = t;
+        this.ts = pts;
+        this.vsuf = values;
+        this.offs = pvLength;
+        this.t2 = t;
         this.id = id;
     }
 }
