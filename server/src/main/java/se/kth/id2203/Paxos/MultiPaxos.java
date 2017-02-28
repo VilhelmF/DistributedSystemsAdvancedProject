@@ -1,19 +1,16 @@
 package se.kth.id2203.Paxos;
 
-import com.sun.org.apache.xpath.internal.operations.Mult;
-import jdk.management.resource.internal.inst.FileOutputStreamRMHooks;
-import se.kth.id2203.ReadWrite.ReadListValue;
-import se.kth.id2203.broadcasting.BEB_Broadcast;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
+import se.kth.id2203.failuredetector.StartMessage;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;
 import se.sics.kompics.network.Address;
 import se.sics.kompics.network.Network;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by sindrikaldal on 27/02/17.
@@ -21,13 +18,15 @@ import java.util.List;
 @SuppressWarnings("Since15")
 public class MultiPaxos extends ComponentDefinition {
 
+    final static Logger LOG = LoggerFactory.getLogger(MultiPaxos.class);
+
     //******* Ports ******
     Positive<Network> net = requires(Network.class);
     Negative<AbortableSequenceConsensus> asc = provides(AbortableSequenceConsensus.class);
     Positive<BestEffortBroadcast> beb = requires(BestEffortBroadcast.class);
 
     //******* Fields ******
-    public List<NetAddress> topology = new ArrayList<>();
+    public NavigableSet<NetAddress> topology;
     public int N;
     private int t;                                          //Logical clock.
     private int prepts;                                     //Acceptor: Prepared timestamp.
@@ -45,7 +44,7 @@ public class MultiPaxos extends ComponentDefinition {
 
     //******* Constructor ******
     public MultiPaxos(Init init) {
-        this.topology = new ArrayList<>(); // TODO assign topology
+        this.topology = new TreeSet<>(); // TODO assign topology
         this.N = 3; // TODO assign proper N
 
         this.t = init.t;
@@ -111,6 +110,35 @@ public class MultiPaxos extends ComponentDefinition {
     }
 
     //******* Handlers ******
+    protected final Handler<StartMessage> startHandler = new Handler<StartMessage>() {
+        @Override
+        public void handle(StartMessage startMessage) {
+            LOG.info("Received Start Message");
+
+            // Not fully sure where to handle initialization.
+            t = 0;
+            prepts = 0;
+            ats = 0;
+            av = new ArrayList<>();
+            al = 0;
+            pts = 0;
+            pv = new ArrayList<>();
+            pl = 0;
+
+            proposedValues = new ArrayList<>();
+            readlist = new HashMap<>();
+            accepted = new HashMap<>();
+            decided = new HashMap<>();
+
+            topology = startMessage.topology;
+            N = topology.size();
+            for (NetAddress na : topology) {
+               accepted.put(na, 0);
+               decided.put(na, 0);
+            }
+        }
+    };
+
     protected final ClassMatchedHandler<Propose, Message> proposeHandler = new ClassMatchedHandler<Propose, Message>() {
 
         @Override
