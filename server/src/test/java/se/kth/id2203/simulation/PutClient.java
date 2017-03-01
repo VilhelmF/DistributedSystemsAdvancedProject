@@ -73,7 +73,7 @@ public class PutClient extends ComponentDefinition {
                 LOG.info("Got GetResponse: " + content.response + " " + content.status.toString());
                 int tempKey = Integer.parseInt(key) + messages;
                 LOG.info("tempKey: " + tempKey);
-                String resp = content.status.toString();
+                String resp = content.response;
                 String wat = Integer.toString(tempKey);
                 res.put(wat, resp);
             } else {
