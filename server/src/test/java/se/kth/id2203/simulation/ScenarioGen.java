@@ -144,7 +144,7 @@ public abstract class ScenarioGen {
         }
     };
 
-    public static SimulationScenario simpleOps(final int servers) {
+    public static SimulationScenario simpleOps(final int servers, final int clients) {
         return new SimulationScenario() {
             {
                 SimulationScenario.StochasticProcess startCluster = new SimulationScenario.StochasticProcess() {
@@ -157,7 +157,7 @@ public abstract class ScenarioGen {
                 SimulationScenario.StochasticProcess startClients = new SimulationScenario.StochasticProcess() {
                     {
                         eventInterArrivalTime(constant(1000));
-                        raise(1, startClientOp, new BasicIntSequentialDistribution(1));
+                        raise(clients, startClientOp, new BasicIntSequentialDistribution(1));
                     }
                 };
                 startCluster.start();
