@@ -70,10 +70,12 @@ public class PutClient extends ComponentDefinition {
                 getID.add(op.id);
                 LOG.info("Sending {}", op);
             }  else if (key != null && getID.contains(content.id)) {
-                LOG.info("Got GetResponse: " + content.response);
+                LOG.info("Got GetResponse: " + content.response + " " + content.status.toString());
                 int tempKey = Integer.parseInt(key) + messages;
-                String resp = content.response;
-                res.put(Integer.toString(tempKey), resp);
+                LOG.info("tempKey: " + tempKey);
+                String resp = content.status.toString();
+                String wat = Integer.toString(tempKey);
+                res.put(wat, resp);
             } else {
                 LOG.warn("ID {} was not pending! Ignoring response.", content.id);
             }

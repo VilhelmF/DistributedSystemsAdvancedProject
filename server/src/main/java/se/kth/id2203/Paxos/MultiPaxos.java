@@ -286,7 +286,9 @@ public class MultiPaxos extends ComponentDefinition {
                 if (accept.offs < av.size()) {
                     av = getPrefix(av, accept.offs);
                 }
+                LOG.info("AV size: " + av.size());
                 av.addAll(accept.vsuf);
+                LOG.info("AV size: " + av.size());
                 trigger(new Message(self, context.getSource(), new AcceptAck(accept.ts, av.size(), t)), net);
             }
         }
@@ -329,6 +331,7 @@ public class MultiPaxos extends ComponentDefinition {
             LOG.info("decide.ts = " + decide.ts + " prepts:  " + prepts);
             if (decide.ts == prepts) {
                 LOG.info("decide.ts == prepts");
+                LOG.info("al : " + al + " decide.l : " + decide.l);
                 while (al < decide.l) {
                     LOG.info("Sending ASCDecide   al: " + al + "   decide.l: " + decide.l);
                     trigger(new ASCDecide(av.get(al)), asc);
