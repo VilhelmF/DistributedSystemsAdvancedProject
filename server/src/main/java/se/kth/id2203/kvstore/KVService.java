@@ -67,7 +67,6 @@ public class KVService extends ComponentDefinition {
         public void handle(GetOperation content, Message context) {
             LOG.info("Received a get request: " + content.key);
             pending.put(content.id, context.getSource());
-            //trigger(new AR_Read_Request(Integer.parseInt(content.key), content.id), atomicRegister);
             Propose p = new Propose(content.id, "GET", Integer.parseInt(content.key), null, null);
             trigger(p, asc);
         }
@@ -80,7 +79,6 @@ public class KVService extends ComponentDefinition {
             LOG.info("Got a put request: " + content.key + " " + " " + content.value);
             LOG.info("ID is : " + content.id);
             pending.put(content.id, context.getSource());
-            //trigger(new AR_Write_Request(Integer.parseInt(content.key), content.value, content.id), atomicRegister);
             Propose p = new Propose(content.id, "PUT", Integer.parseInt(content.key), content.value, null);
             trigger(p, asc);
         }
@@ -91,7 +89,6 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(CASOperation content, Message context) {
             pending.put(content.id, context.getSource());
-            //trigger(new AR_CAS_Request(Integer.parseInt(content.key), content.referenceValue, content.newValue, content.id), atomicRegister);
             Propose p = new Propose(content.id, "CAS", Integer.parseInt(content.key), content.newValue, content.referenceValue);
             trigger(p, asc);
         }
@@ -103,7 +100,7 @@ public class KVService extends ComponentDefinition {
             LOG.info("ABORTING!!!");
             NetAddress src = pending.get(abort.id);
             pending.remove(abort.id);
-            trigger(new Message(self, src, new OpResponse(abort.id, "ABORT", Code.NOT_IMPLEMENTED)), net);
+            trigger(new Message(self, src, new OpResponse(abort.id, null, Code.ABORT)), net);
         }
     };
 
@@ -119,8 +116,13 @@ public class KVService extends ComponentDefinition {
                 LOG.info("Doing get!");
                 String value = keyValueStore.get(key);
                 if(src != null) {
+                    if(value != null) {
+                        trigger(new Message(self, src, new OpResponse(id, value, Code.OK)), net);
+                    }
+                    else {
+                        trigger(new Message(self, src, new OpResponse(id, value, Code.NOT_FOUND)), net);
+                    }
                     pending.remove(id);
-                    trigger(new Message(self, src, new OpResponse(id, value, Code.OK)), net);
                 }
             } else if (method.equals("PUT")) {
                 LOG.info("Doing put!");
@@ -131,10 +133,17 @@ public class KVService extends ComponentDefinition {
                 }
             } else if (method.equals("CAS")) {
                 LOG.info("Doing CAS");
-                keyValueStore.put(key, ascDecide.propose.value);
+                boolean validCAS = ascDecide.propose.reference.equals(keyValueStore.get(key));
+                if(validCAS) {
+                    keyValueStore.put(key, ascDecide.propose.value);
+                }
                 if(src != null) {
+                    if(validCAS) {
+                        trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
+                    } else {
+                        trigger(new Message(self, src, new OpResponse(id, null, Code.KEY_MISMATCH)), net);
+                    }
                     pending.remove(id);
-                    trigger(new Message(self, src, new OpResponse(id, null, Code.OK)), net);
                 }
             }
         }
