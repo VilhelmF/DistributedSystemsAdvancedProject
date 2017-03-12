@@ -326,9 +326,7 @@ public class MultiPaxos extends ComponentDefinition {
 
         @Override
         public void handle(Decide decide, Message context) {
-            LOG.info("Received this awesome decide from : " + context.getSource());
             t = Integer.max(t, decide.t) + 1;
-            LOG.info("decide.ts = " + decide.ts + " prepts:  " + prepts);
             if (decide.ts == prepts) {
                 LOG.info("decide.ts == prepts");
                 LOG.info("al : " + al + " decide.l : " + decide.l);

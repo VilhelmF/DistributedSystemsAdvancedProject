@@ -134,7 +134,6 @@ public class VSOverlayManager extends ComponentDefinition {
             }
             LOG.info("Broadcasting message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);
-            //trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
         }
     };
     protected final Handler<RouteMsg> localRouteHandler = new Handler<RouteMsg>() {

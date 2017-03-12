@@ -36,7 +36,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(AR_Read_Request readRequest) {
-            LOG.info("Starting new read req.");
             int rid = increaseRid(readRequest.key);
             Object readVal = null;
             Object writeVal = null;
@@ -51,8 +50,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(Topology_Change tc) {
-            LOG.info("Received a topology change!");
-            LOG.info("Changing N: " + tc.change);
             N += tc.change;
         }
     };
@@ -61,7 +58,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
 
         @Override
         public void handle(AR_Write_Request writeRequest) {
-            // Hvað ef tvö request koma inn og rid hækkar um 2 áður en AtomicRequest er búið til?
             int rid = increaseRid(writeRequest.key);
             AtomicRequest ar = new AtomicRequest(writeRequest.key, rid, 0, new HashMap<Address, ReadListValue>(), false, null, writeRequest.value, 0, 0);
             requests.put(ar.key, ar);
@@ -146,12 +142,9 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
                     ar.acks = 0;
                     if (ar.reading) {
                         ar.reading = false;
-                        //LOG.info("Finsihed reading and returning response for RID: " + rids.get(ack.key));
                         trigger(new AR_Read_Response(ar.readVal, ack.opId), nnar);
-                        //requests.remove(request.rid);
                         requests.put(ar.key, ar);
                     } else {
-                        LOG.info("Apparently I'm writing...");
                         trigger(new AR_Write_Response(ack.opId), nnar);
                         requests.put(ar.key, ar);
                     }
@@ -168,18 +161,6 @@ public class ReadImposeWriteConsultMajority extends ComponentDefinition {
         } else {
             return rid.rid + 1;
         }
-    }
-
-    public void increaseAck(int key) {
-        /*
-        bject ack = acks.get(key);
-
-        if (ack == null) {
-            acks.put(key, 1);
-        } else {
-            acks.put(key, ((Integer) ack) + 1);
-        }
-        */
     }
 
     public boolean isBigger(int writeWR, int writeTS, int wr, int ts) {

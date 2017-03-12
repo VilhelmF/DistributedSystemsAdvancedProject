@@ -35,22 +35,12 @@ public class EPFD extends ComponentDefinition {
     private NavigableSet<NetAddress> topology;
     private HashSet<NetAddress> suspcected = new HashSet<>();
     private int seqnum = 0;
-    private List<Address> alive = new ArrayList<>(); // TODO initialize with proper values
-    private int period = 2000; //TODO find proper period
-
-    //******* Handlers ******
-    /*protected final Handler<Start> startHandler = new Handler<Start>() {
-
-        @Override
-        public void handle(Start e) {
-            startTimer(period);
-        }
-    };*/
+    private List<Address> alive = new ArrayList<>();
+    private int period = 2000;
 
     protected final Handler<StartMessage> startHandler = new Handler<StartMessage>() {
         @Override
         public void handle(StartMessage startMessage) {
-            //LOG.info("Received Start Message");
             topology = startMessage.topology;
             for (NetAddress na : topology) {
                 alive.add(na);
@@ -62,7 +52,6 @@ public class EPFD extends ComponentDefinition {
     protected final Handler<TopologyMessage> topologyHandler = new Handler<TopologyMessage>() {
         @Override
         public void handle(TopologyMessage topologyMessage) {
-            //LOG.info("EPFD : Received new topology with size : " + topologyMessage.topology.size());
             topology = topologyMessage.topology;
         }
     };
@@ -73,18 +62,12 @@ public class EPFD extends ComponentDefinition {
             if (!Sets.intersection(Sets.newHashSet(alive), suspcected).isEmpty()) {
                 period += delta;
             }
-            //LOG.info("Checking timeout");
-            //LOG.info("Topology size : " + topology.size());
             seqnum++;
-            //LOG.info("My topology: " + topology.toString());
             for (NetAddress address : topology) {
-                //LOG.info("Checking " + address.toString());
                 if (!alive.contains(address) && !suspcected.contains(address)) {
-                    //LOG.info("Suspecting " + address.toString());
                     suspcected.add(address);
                     trigger(new Suspect(address), epfd);
                 } else if (alive.contains(address) && suspcected.contains(address)) {
-                    //LOG.info("Restoring " + address.toString());
                     suspcected.remove(address);
                     trigger(new Restore(address), epfd);
                 }
