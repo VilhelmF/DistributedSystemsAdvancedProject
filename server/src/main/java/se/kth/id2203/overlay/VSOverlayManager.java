@@ -129,6 +129,7 @@ public class VSOverlayManager extends ComponentDefinition {
         public void handle(RouteMsg content, Message context) {
             Collection<NetAddress> partition = lut.get(content.key);
             NetAddress target = J6.randomElement(partition);
+            // Collections are not sorted and don't have last elements.
             for(NetAddress na : partition) {
                 target = na;
             }

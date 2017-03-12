@@ -67,8 +67,13 @@ public class KVService extends ComponentDefinition {
         public void handle(GetOperation content, Message context) {
             LOG.info("Received a get request: " + content.key);
             pending.put(content.id, context.getSource());
-            Propose p = new Propose(content.id, "GET", Integer.parseInt(content.key), null, null);
-            trigger(p, asc);
+            try {
+                Propose p = new Propose(content.id, "GET", Integer.parseInt(content.key), null, null);
+                trigger(p, asc);
+            } catch (Exception e) {
+                pending.remove(content.id);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, null, Code.ABORT)), net);
+            }
         }
     };
 
@@ -79,8 +84,13 @@ public class KVService extends ComponentDefinition {
             LOG.info("Got a put request: " + content.key + " " + " " + content.value);
             LOG.info("ID is : " + content.id);
             pending.put(content.id, context.getSource());
-            Propose p = new Propose(content.id, "PUT", Integer.parseInt(content.key), content.value, null);
-            trigger(p, asc);
+            try {
+                Propose p = new Propose(content.id, "PUT", Integer.parseInt(content.key), content.value, null);
+                trigger(p, asc);
+            } catch (Exception e) {
+                pending.remove(content.id);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, null, Code.ABORT)), net);
+            }
         }
     };
 
@@ -89,8 +99,13 @@ public class KVService extends ComponentDefinition {
         @Override
         public void handle(CASOperation content, Message context) {
             pending.put(content.id, context.getSource());
-            Propose p = new Propose(content.id, "CAS", Integer.parseInt(content.key), content.newValue, content.referenceValue);
-            trigger(p, asc);
+            try {
+                Propose p = new Propose(content.id, "CAS", Integer.parseInt(content.key), content.newValue, content.referenceValue);
+                trigger(p, asc);
+            } catch (Exception e) {
+                pending.remove(content.id);
+                trigger(new Message(self, context.getSource(), new OpResponse(content.id, null, Code.ABORT)), net);
+            }
         }
     };
 

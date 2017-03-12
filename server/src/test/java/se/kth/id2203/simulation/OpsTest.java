@@ -36,23 +36,10 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
 
-    private static final int NUM_MESSAGES = 4;
+    private static final int NUM_MESSAGES = 100;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
-
-    @Test
-    public void simpleGetTest() {
-        long seed = 123;
-        SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3, 1);
-        res.put("messages", NUM_MESSAGES);
-        simpleBootScenario.simulate(LauncherComp.class);
-        for (int i = 0; i < NUM_MESSAGES; i++) {
-            LOG.info(res.get(""+i, String.class));
-            Assert.assertEquals("NOT_FOUND", res.get("" + i, String.class));
-        }
-    }
 
     /**
      * Tests PUT, GET and CAS functions.
@@ -61,7 +48,7 @@ public class OpsTest {
     public void simpleOperationsTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6, 1);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6, 10);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
