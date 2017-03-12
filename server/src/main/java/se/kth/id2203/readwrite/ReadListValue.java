@@ -1,4 +1,4 @@
-package se.kth.id2203.ReadWrite;
+package se.kth.id2203.readwrite;
 
 public class ReadListValue implements Comparable {
     private int ts;

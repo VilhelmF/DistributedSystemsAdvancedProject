@@ -25,10 +25,10 @@ package se.kth.id2203.kvstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.Paxos.ASCDecide;
-import se.kth.id2203.Paxos.Abort;
-import se.kth.id2203.Paxos.Paxos;
-import se.kth.id2203.Paxos.Propose;
+import se.kth.id2203.paxos.ASCDecide;
+import se.kth.id2203.paxos.Abort;
+import se.kth.id2203.paxos.Paxos;
+import se.kth.id2203.paxos.Propose;
 import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;

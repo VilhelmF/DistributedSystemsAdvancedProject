@@ -26,7 +26,7 @@ package se.kth.id2203.overlay;
 import com.larskroll.common.J6;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import se.kth.id2203.Paxos.Paxos;
+import se.kth.id2203.paxos.Paxos;
 import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.bootstrapping.Booted;
 import se.kth.id2203.bootstrapping.Bootstrapping;
@@ -132,7 +132,7 @@ public class VSOverlayManager extends ComponentDefinition {
             for(NetAddress na : partition) {
                 target = na;
             }
-            LOG.info("Broadcasting message for key {} to {}", content.key, target);
+            LOG.info("Forwarding message for key {} to {}", content.key, target);
             trigger(new Message(context.getSource(), target, content.msg), net);
             //trigger(new BroadcastMessage(context.getSource(), content.msg, partition), broadcast);
         }

@@ -1,4 +1,4 @@
-package se.kth.id2203.ReadWrite;
+package se.kth.id2203.readwrite;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,7 +6,6 @@ import se.kth.id2203.atomicregister.*;
 import se.kth.id2203.broadcasting.BEB_Broadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;
 import se.kth.id2203.failuredetector.Topology_Change;
-import se.kth.id2203.kvstore.OpResponse.Code;
 import se.kth.id2203.networking.Message;
 import se.kth.id2203.networking.NetAddress;
 import se.sics.kompics.*;

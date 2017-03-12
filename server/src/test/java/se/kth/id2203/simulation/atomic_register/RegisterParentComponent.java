@@ -1,6 +1,6 @@
 package se.kth.id2203.simulation.atomic_register;
 
-import se.kth.id2203.ReadWrite.ReadImposeWriteConsultMajority;
+import se.kth.id2203.readwrite.ReadImposeWriteConsultMajority;
 import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.broadcasting.BasicBroadcast;
 import se.kth.id2203.broadcasting.BestEffortBroadcast;

@@ -54,8 +54,11 @@ public class OpsTest {
         }
     }
 
+    /**
+     * Tests PUT, GET and CAS functions.
+     */
     @Test
-    public void simplePutTest() {
+    public void simpleOperationsTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
         SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6, 1);

@@ -1,4 +1,4 @@
-package se.kth.id2203.ReadWrite;
+package se.kth.id2203.readwrite;
 
 import se.sics.kompics.KompicsEvent;
 import se.sics.kompics.network.Address;

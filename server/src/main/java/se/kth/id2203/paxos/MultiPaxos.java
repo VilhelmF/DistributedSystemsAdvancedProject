@@ -1,4 +1,4 @@
-package se.kth.id2203.Paxos;
+package se.kth.id2203.paxos;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

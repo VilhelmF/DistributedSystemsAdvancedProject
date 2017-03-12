@@ -56,7 +56,7 @@ public class LookupTable implements NodeAssignment {
     public Collection<NetAddress> get(String key) {
 
         int hashedKey = Math.abs(MurmurHasher.keyToHash(key));
-        int moddedKey = hashedKey % partitions.keySet().size();
+        int moddedKey = hashedKey % partitions.keySet().size() + 1;
         int partition = partitions.keySet().last();
         if (this.partitions.containsKey(moddedKey)) partition = moddedKey;
         Collection<NetAddress> p = partitions.get(partition);

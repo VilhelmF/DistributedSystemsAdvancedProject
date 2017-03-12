@@ -1,4 +1,4 @@
-package se.kth.id2203.Paxos;
+package se.kth.id2203.paxos;
 
 import se.kth.id2203.networking.NetAddress;
 

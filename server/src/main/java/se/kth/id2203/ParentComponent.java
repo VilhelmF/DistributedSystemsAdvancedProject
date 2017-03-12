@@ -1,9 +1,9 @@
 package se.kth.id2203;
 
 import com.google.common.base.Optional;
-import se.kth.id2203.Paxos.MultiPaxos;
-import se.kth.id2203.Paxos.Paxos;
-import se.kth.id2203.ReadWrite.ReadImposeWriteConsultMajority;
+import se.kth.id2203.paxos.MultiPaxos;
+import se.kth.id2203.paxos.Paxos;
+import se.kth.id2203.readwrite.ReadImposeWriteConsultMajority;
 import se.kth.id2203.atomicregister.AtomicRegister;
 import se.kth.id2203.bootstrapping.BootstrapClient;
 import se.kth.id2203.bootstrapping.BootstrapServer;
