@@ -36,7 +36,7 @@ import se.sics.kompics.simulator.run.LauncherComp;
  */
 public class OpsTest {
 
-    private static final int NUM_MESSAGES = 30;
+    private static final int NUM_MESSAGES = 4;
     private final SimulationResultMap res = SimulationResultSingleton.getInstance();
     final static Logger LOG = LoggerFactory.getLogger(OpsTest.class);
 
@@ -45,7 +45,7 @@ public class OpsTest {
     public void simpleGetTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3, 1);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
@@ -58,7 +58,7 @@ public class OpsTest {
     public void simplePutTest() {
         long seed = 123;
         SimulationScenario.setSeed(seed);
-        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(3);
+        SimulationScenario simpleBootScenario = ScenarioGen.simpleOps(6, 1);
         res.put("messages", NUM_MESSAGES);
         simpleBootScenario.simulate(LauncherComp.class);
         for (int i = 0; i < NUM_MESSAGES; i++) {
@@ -71,5 +71,13 @@ public class OpsTest {
             LOG.info("Key to get:" + i + " expected value: " + value);
             Assert.assertEquals("Value: " + value, res.get("" + i, String.class));
         }
+        for(int i = NUM_MESSAGES * 2; i < NUM_MESSAGES*3; i++) {
+            int value = i - NUM_MESSAGES * 2;
+            LOG.info("Key to get:" + i + " expected value: " + value + "0");
+            String eVal = value + "0";
+            Assert.assertEquals(eVal, res.get("" + i, String.class));
+        }
     }
+
+
 }
